@@ -1,0 +1,95 @@
+# Smithery.ai MCP server manifest.
+# Listing URL: https://smithery.ai/server/replicate-mcp-server
+# Submission: https://smithery.ai/new
+
+name: replicate-mcp-server
+displayName: Replicate
+description: |
+  Gives Claude native access to the full Replicate catalog — image, video,
+  music, speech (TTS + STT), LLMs, vision, upscale, inpaint, segment,
+  embeddings, and anything else hosted on replicate.com. Includes a
+  pre-call cost estimator, prediction history / cancel tools, multi-token
+  round-robin pool, rate-limit awareness, and a webhook-friendly HTTP
+  transport.
+homepage: https://github.com/your-org/replicate-mcp-server
+license: MIT
+icon: https://replicate.com/favicon.ico
+
+# Tags help Smithery surface the server in category browsing.
+tags:
+  - image-generation
+  - video-generation
+  - tts
+  - stt
+  - llm
+  - vision
+  - upscale
+  - inpaint
+  - embeddings
+  - replicate
+
+# How to run the server. Smithery supports stdio (most clients) and HTTP.
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    required:
+      - replicateApiToken
+    properties:
+      replicateApiToken:
+        type: string
+        title: Replicate API Token
+        description: >-
+          Your Replicate API token (starts with r8_). Get one at
+          https://replicate.com/account/api-tokens.
+        format: password
+      replicateDownloadDir:
+        type: string
+        title: Download directory
+        description: Where to save generated files. Defaults to ~/Downloads/replicate-mcp.
+        default: ""
+      replicateApiTokenPool:
+        type: string
+        title: Token pool (multi-account)
+        description: >-
+          Optional comma-separated list of additional Replicate tokens for
+          round-robin load spreading. Leave empty for single-token use.
+        default: ""
+      logLevel:
+        type: string
+        title: Log level
+        enum: [debug, info, warn, error]
+        default: info
+  commandFunction: |-
+    (config) => ({
+      command: 'npx',
+      args: ['-y', 'replicate-mcp-server'],
+      env: {
+        REPLICATE_API_TOKEN: config.replicateApiToken,
+        ...(config.replicateDownloadDir && { REPLICATE_DOWNLOAD_DIR: config.replicateDownloadDir }),
+        ...(config.replicateApiTokenPool && { REPLICATE_API_TOKEN_POOL: config.replicateApiTokenPool }),
+        LOG_LEVEL: config.logLevel || 'info',
+      },
+    })
+
+# 19 tools registered. Keep this in sync with src/index.ts.
+tools:
+  - replicate_generate_image
+  - replicate_generate_video
+  - replicate_generate_audio
+  - replicate_generate_speech
+  - replicate_chat
+  - replicate_vision
+  - replicate_upscale_image
+  - replicate_remove_background
+  - replicate_transcribe_audio
+  - replicate_inpaint
+  - replicate_segment
+  - replicate_embed_text
+  - replicate_list_predictions
+  - replicate_cancel_prediction
+  - replicate_estimate_cost
+  - replicate_run_model
+  - replicate_search_models
+  - replicate_get_model_schema
+  - replicate_get_prediction

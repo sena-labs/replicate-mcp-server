@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "replicate": {
+      "command": "node",
+      "args": ["/ABSOLUTE/PATH/TO/replicate-mcp-server/dist/index.js"],
+      "env": {
+        "REPLICATE_API_TOKEN": "r8_your_token_here",
+        "REPLICATE_DOWNLOAD_DIR": "/Users/you/Downloads/replicate-mcp"
+      }
+    }
+  }
+}

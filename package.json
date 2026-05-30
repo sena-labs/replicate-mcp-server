@@ -1,0 +1,69 @@
+{
+  "name": "replicate-mcp-server",
+  "version": "3.0.0",
+  "description": "MCP server giving Claude native access to Replicate's full catalog: image, video, audio, music, speech, LLM, vision, upscale, inpaint, segment, transcription, embeddings — anything Replicate hosts. Stdio + HTTP/SSE transport, multi-token pool, rate-limit aware, cost estimator.",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "replicate-mcp-server": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "smithery.yaml"
+  ],
+  "scripts": {
+    "build": "tsc && chmod +x dist/index.js",
+    "start": "node dist/index.js",
+    "start:http": "node dist/index.js --http",
+    "dev": "tsc --watch",
+    "test": "npm run build && node --test test/unit/*.test.mjs && node test/stdio-test.mjs",
+    "test:unit": "node --test test/unit/*.test.mjs",
+    "test:stdio": "node test/stdio-test.mjs",
+    "prepublishOnly": "npm run build && npm run test"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "replicate",
+    "claude",
+    "claude-desktop",
+    "anthropic",
+    "ai",
+    "image-generation",
+    "video-generation",
+    "audio-generation",
+    "tts",
+    "llm",
+    "vision",
+    "embeddings",
+    "stdio",
+    "http",
+    "sse",
+    "openwebui"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/replicate-mcp-server"
+  },
+  "homepage": "https://github.com/your-org/replicate-mcp-server#readme",
+  "bugs": {
+    "url": "https://github.com/your-org/replicate-mcp-server/issues"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "replicate": "^1.4.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.2"
+  }
+}

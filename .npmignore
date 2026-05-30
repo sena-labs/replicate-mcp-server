@@ -1,0 +1,22 @@
+# Source — only ship compiled dist/
+src/
+test/
+scripts/
+mcpo.log
+mcpo.err
+mcpo-response.json
+ruvector.db
+
+# Build artefacts not for publish
+*.tsbuildinfo
+tsconfig.json
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+*.err
