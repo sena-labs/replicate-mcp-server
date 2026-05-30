@@ -25,8 +25,8 @@ test("parseServerArgs: --host overrides default", () => {
 });
 
 test("parseServerArgs: --api-key captured", () => {
-  const a = parseServerArgs(["--http", "--api-key", "secret-key"]);
-  assert.equal(a.httpApiKey, "secret-key");
+  const a = parseServerArgs(["--http", "--api-key", "secret-key-1234567890"]);
+  assert.equal(a.httpApiKey, "secret-key-1234567890");
 });
 
 test("parseServerArgs: --webhook-port + --webhook-host", () => {
