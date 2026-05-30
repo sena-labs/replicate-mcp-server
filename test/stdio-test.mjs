@@ -93,8 +93,10 @@ async function run() {
     const expected = [
       "replicate_cancel_prediction",
       "replicate_chat",
+      "replicate_clone_voice",
       "replicate_embed_text",
       "replicate_estimate_cost",
+      "replicate_generate_3d",
       "replicate_generate_audio",
       "replicate_generate_image",
       "replicate_generate_speech",
@@ -102,12 +104,14 @@ async function run() {
       "replicate_get_model_schema",
       "replicate_get_prediction",
       "replicate_inpaint",
+      "replicate_lipsync",
       "replicate_list_predictions",
       "replicate_remove_background",
       "replicate_run_model",
       "replicate_search_models",
       "replicate_segment",
       "replicate_transcribe_audio",
+      "replicate_upload_file",
       "replicate_upscale_image",
       "replicate_vision",
     ];
@@ -115,7 +119,7 @@ async function run() {
     const extra = names.filter((n) => !expected.includes(n));
     if (missing.length) fail("missing tools: " + missing.join(","));
     if (extra.length) fail("unexpected tools: " + extra.join(","));
-    if (!missing.length && !extra.length) ok(`tools/list -> 19 tools registered`);
+    if (!missing.length && !extra.length) ok(`tools/list -> 23 tools registered`);
 
     for (const t of list.result.tools) {
       if (!t.inputSchema) fail(`${t.name}: no inputSchema`);
