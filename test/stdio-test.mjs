@@ -106,6 +106,7 @@ async function run() {
       "replicate_inpaint",
       "replicate_lipsync",
       "replicate_list_predictions",
+      "replicate_refresh_models",
       "replicate_remove_background",
       "replicate_run_model",
       "replicate_search_models",
@@ -119,7 +120,7 @@ async function run() {
     const extra = names.filter((n) => !expected.includes(n));
     if (missing.length) fail("missing tools: " + missing.join(","));
     if (extra.length) fail("unexpected tools: " + extra.join(","));
-    if (!missing.length && !extra.length) ok(`tools/list -> 23 tools registered`);
+    if (!missing.length && !extra.length) ok(`tools/list -> 24 tools registered`);
 
     for (const t of list.result.tools) {
       if (!t.inputSchema) fail(`${t.name}: no inputSchema`);

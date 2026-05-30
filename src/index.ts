@@ -66,6 +66,8 @@ import {
   CloneVoiceInputSchema,
   Generate3DInputSchema,
   LipsyncInputSchema,
+  RefreshModelsInputSchema,
+  type RefreshModelsInput,
   type GenerateImageInput,
   type GenerateVideoInput,
   type GenerateAudioInput,
@@ -1505,6 +1507,152 @@ Returns structuredContent: { url, file_id, name }
         err,
         "Ensure the file_path is absolute and the file exists and is readable.",
       );
+    }
+  },
+);
+
+/* ---------- Tool: refresh_models ---------- */
+
+/** Maps each curated category to a Replicate search keyword. */
+const REFRESH_CATEGORY_KEYWORDS: Record<string, string> = {
+  image: "image generation",
+  video: "video generation",
+  audio: "music generation",
+  tts: "text to speech",
+  llm: "language model",
+  vision: "image captioning",
+  upscale: "image upscaling",
+  bg: "background removal",
+  stt: "speech recognition",
+  inpaint: "inpainting",
+  segment: "image segmentation",
+  embed: "text embeddings",
+  voiceclone: "voice cloning",
+  threed: "3d generation",
+  lipsync: "lip sync",
+};
+
+server.registerTool(
+  "replicate_refresh_models",
+  {
+    title: "Discover New Popular Replicate Models",
+    description: `Search Replicate for popular models NOT yet in the curated registry. Returns suggestions only — does not modify code.
+
+Use this to find new models worth adding. Then ask Claude to edit src/models.ts with the ones you want.
+
+Args:
+  - categories (string[], optional): Which categories to check. Default: all 15 (image, video, audio, tts, llm, vision, upscale, bg, stt, inpaint, segment, embed, voiceclone, threed, lipsync).
+  - min_run_count (integer, optional): Minimum run_count threshold. Default: 1000.
+  - limit_per_category (integer, optional): Max suggestions per category (1-20). Default: 5.
+
+Returns structuredContent:
+  {
+    "checked_at": string,
+    "categories_checked": string[],
+    "suggestions": [{ category, owner, name, model_id, run_count, description, replicate_url }],
+    "already_curated": number,
+    "total_suggestions": number
+  }
+
+Examples:
+  - "Check for new popular models" → all categories, min 1000 runs
+  - categories=["image","video"], min_run_count=10000 → only top-tier image/video models`,
+    inputSchema: RefreshModelsInputSchema.shape,
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: true,
+    },
+  },
+  async (params: RefreshModelsInput): Promise<ToolResponse> => {
+    try {
+      const targetCategories =
+        params.categories ?? Object.keys(REFRESH_CATEGORY_KEYWORDS);
+
+      // Build flat set of all curated model IDs for O(1) diff lookup.
+      const allRegistries = [
+        IMAGE_MODELS, VIDEO_MODELS, AUDIO_MUSIC_MODELS, TTS_MODELS,
+        LLM_MODELS, VISION_MODELS, UPSCALE_MODELS, BG_REMOVAL_MODELS,
+        STT_MODELS, INPAINT_MODELS, SEGMENT_MODELS, EMBED_MODELS,
+        VOICE_CLONE_MODELS, THREED_MODELS, LIPSYNC_MODELS,
+      ];
+      const curatedIds = new Set(
+        allRegistries.flatMap((r) => Object.values(r).map((m) => m.id)),
+      );
+
+      const suggestions: Array<{
+        category: string;
+        owner: string;
+        name: string;
+        model_id: string;
+        run_count: number;
+        description: string;
+        replicate_url: string;
+      }> = [];
+      let alreadyCurated = 0;
+
+      for (const cat of targetCategories) {
+        const keyword = REFRESH_CATEGORY_KEYWORDS[cat];
+        if (!keyword) continue;
+
+        let models: Awaited<ReturnType<typeof searchModels>>;
+        try {
+          models = await searchModels(keyword);
+        } catch {
+          // Skip category when Replicate API is unreachable — graceful degradation.
+          continue;
+        }
+
+        let added = 0;
+        for (const m of models) {
+          const modelId = `${m.owner}/${m.name}`;
+          if (curatedIds.has(modelId)) {
+            alreadyCurated++;
+            continue;
+          }
+          const runCount = m.run_count ?? 0;
+          if (runCount < params.min_run_count) continue;
+          if (added >= params.limit_per_category) break;
+
+          suggestions.push({
+            category: cat,
+            owner: m.owner,
+            name: m.name,
+            model_id: modelId,
+            run_count: runCount,
+            description: m.description ?? "",
+            replicate_url: m.url,
+          });
+          added++;
+        }
+      }
+
+      const summary =
+        suggestions.length === 0
+          ? `No new popular models found (min_run_count=${params.min_run_count}, checked: ${targetCategories.join(", ")}).`
+          : `Found ${suggestions.length} suggestion(s) not in registry (${alreadyCurated} already curated):\n\n` +
+            suggestions
+              .map(
+                (s) =>
+                  `  ${s.category}: ${s.model_id} — ${s.run_count.toLocaleString()} runs\n    ${s.description}`,
+              )
+              .join("\n\n");
+
+      const result = {
+        checked_at: new Date().toISOString(),
+        categories_checked: targetCategories,
+        suggestions,
+        already_curated: alreadyCurated,
+        total_suggestions: suggestions.length,
+      };
+
+      return {
+        content: [{ type: "text", text: truncate(summary) }],
+        structuredContent: result as unknown as Record<string, unknown>,
+      };
+    } catch (err) {
+      return formatError(err);
     }
   },
 );
