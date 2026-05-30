@@ -1,5 +1,5 @@
-import { strict as assert } from "node:assert";
 import { test } from "node:test";
+import assert from "node:assert/strict";
 
 // Import from built dist (tests run after tsc)
 const { RefreshModelsInputSchema } = await import("../../dist/schemas.js");
