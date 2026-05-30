@@ -1569,6 +1569,8 @@ Examples:
     try {
       const targetCategories =
         params.categories ?? Object.keys(REFRESH_CATEGORY_KEYWORDS);
+      const minRunCount = params.min_run_count ?? 1000;
+      const limitPerCategory = params.limit_per_category ?? 5;
 
       // Build flat set of all curated model IDs for O(1) diff lookup.
       const allRegistries = [
@@ -1612,8 +1614,8 @@ Examples:
             continue;
           }
           const runCount = m.run_count ?? 0;
-          if (runCount < params.min_run_count) continue;
-          if (added >= params.limit_per_category) break;
+          if (runCount < minRunCount) continue;
+          if (added >= limitPerCategory) break;
 
           suggestions.push({
             category: cat,
@@ -1630,7 +1632,7 @@ Examples:
 
       const summary =
         suggestions.length === 0
-          ? `No new popular models found (min_run_count=${params.min_run_count}, checked: ${targetCategories.join(", ")}).`
+          ? `No new popular models found (min_run_count=${minRunCount}, checked: ${targetCategories.join(", ")}).`
           : `Found ${suggestions.length} suggestion(s) not in registry (${alreadyCurated} already curated):\n\n` +
             suggestions
               .map(

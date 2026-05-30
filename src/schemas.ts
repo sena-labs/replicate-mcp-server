@@ -683,6 +683,7 @@ export const RefreshModelsInputSchema = z
   .object({
     categories: z
       .array(z.string().min(1))
+      .min(1)
       .optional()
       .describe(
         "Categories to check. Default: all 15 (image, video, audio, tts, llm, vision, upscale, bg, stt, inpaint, segment, embed, voiceclone, threed, lipsync).",
