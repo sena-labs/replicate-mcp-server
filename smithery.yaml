@@ -76,7 +76,7 @@ startCommand:
       },
     })
 
-# 22 tools registered. Keep this in sync with src/index.ts.
+# 24 tools registered. Keep this in sync with src/index.ts.
 tools:
   - replicate_generate_image
   - replicate_generate_video
@@ -93,6 +93,7 @@ tools:
   - replicate_clone_voice
   - replicate_generate_3d
   - replicate_lipsync
+  - replicate_refresh_models
   - replicate_list_predictions
   - replicate_cancel_prediction
   - replicate_estimate_cost
