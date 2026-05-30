@@ -677,6 +677,32 @@ export const UploadFileInputSchema = z
   })
   .strict();
 
+/* ---------- Model refresh / discovery ---------- */
+
+export const RefreshModelsInputSchema = z
+  .object({
+    categories: z
+      .array(z.string().min(1))
+      .optional()
+      .describe(
+        "Categories to check. Default: all 15 (image, video, audio, tts, llm, vision, upscale, bg, stt, inpaint, segment, embed, voiceclone, threed, lipsync).",
+      ),
+    min_run_count: z
+      .number()
+      .int()
+      .min(0)
+      .default(1000)
+      .describe("Minimum run_count to surface a model. Default: 1000."),
+    limit_per_category: z
+      .number()
+      .int()
+      .min(1)
+      .max(20)
+      .default(5)
+      .describe("Max suggestions per category (1–20). Default: 5."),
+  })
+  .strict();
+
 /* ---------- Inferred types ---------- */
 
 export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
@@ -702,3 +728,4 @@ export type UploadFileInput = z.infer<typeof UploadFileInputSchema>;
 export type CloneVoiceInput = z.infer<typeof CloneVoiceInputSchema>;
 export type Generate3DInput = z.infer<typeof Generate3DInputSchema>;
 export type LipsyncInput = z.infer<typeof LipsyncInputSchema>;
+export type RefreshModelsInput = z.infer<typeof RefreshModelsInputSchema>;
