@@ -69,8 +69,12 @@ import {
   RefreshModelsInputSchema,
   BatchStartInputSchema,
   BatchStatusInputSchema,
+  PipelineStartInputSchema,
+  PipelineStatusInputSchema,
   type BatchStartInput,
   type BatchStatusInput,
+  type PipelineStartInput,
+  type PipelineStatusInput,
   type RefreshModelsInput,
   type GenerateImageInput,
   type GenerateVideoInput,
@@ -111,6 +115,7 @@ import { estimateCost, checkBudget } from "./cost.js";
 import { webhookEnabled } from "./webhook.js";
 import { logger } from "./logger.js";
 import { createBatchJob, getBatchJob, startGC } from "./batch.js";
+import { createPipeline, getPipeline, startPipelineGC } from "./pipeline.js";
 
 /* ---------- Server setup ---------- */
 
@@ -1516,6 +1521,169 @@ Returns structuredContent: { url, file_id, name }
   },
 );
 
+/* ---------- Tool: pipeline_start ---------- */
+
+server.registerTool(
+  "replicate_pipeline_start",
+  {
+    title: "Start Async Pipeline (DAG of predictions)",
+    description: `Run a directed acyclic graph (DAG) of Replicate predictions as a background job. Returns a pipeline_id immediately. Poll replicate_pipeline_status for per-step progress and results.
+
+Independent steps run concurrently. Downstream steps auto-start when their dependencies complete. Use "$stepId.field[n]" template strings to pass one step's output as another step's input.
+
+IMPORTANT: model must be a full Replicate identifier ("owner/name" or "owner/name:version"). Curated shortcuts (e.g. "flux-schnell") are not supported — look up the full id via replicate_get_model_schema.
+
+Template reference syntax:
+  "$gen.urls[0]"          → first URL output of step "gen"
+  "$gen.urls"             → full URLs array
+  "$gen.local_paths[0]"   → first downloaded local path
+  "$gen.text_output[0]"   → first text output (for LLMs)
+
+Args:
+  - steps (array, 1–20): Pipeline steps. Each: { id, model, input, depends_on? }.
+    depends_on is inferred from $ref patterns in input when omitted.
+  - concurrency (1–5, default 3): Max simultaneous steps.
+  - download (boolean, default true): Download step outputs locally.
+  - timeout_ms_per_step (default 300000): Per-step timeout.
+  - ttl_hours (1–72, default 1): How long to keep results in memory. Lost on server restart.
+
+Returns: { pipeline_id, total, message }
+
+Example — generate + upscale + remove background in parallel:
+  steps=[
+    { "id": "gen", "model": "black-forest-labs/flux-schnell", "input": { "prompt": "a fox" } },
+    { "id": "upscale", "model": "nightmareai/real-esrgan", "input": { "image": "$gen.urls[0]", "scale": 4 } },
+    { "id": "no_bg", "model": "lucataco/remove-bg", "input": { "image": "$gen.urls[0]" } }
+  ]
+  upscale and no_bg both depend on gen, run in parallel after gen completes.`,
+    inputSchema: PipelineStartInputSchema.shape,
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: true,
+    },
+  },
+  async (params: PipelineStartInput): Promise<ToolResponse> => {
+    try {
+      const result = createPipeline({
+        steps: params.steps,
+        concurrency: params.concurrency ?? 3,
+        download: params.download,
+        timeoutMsPerStep: params.timeout_ms_per_step ?? 300_000,
+        ttlHours: params.ttl_hours ?? 1,
+      });
+
+      if ("error" in result) {
+        return {
+          content: [{ type: "text", text: `Error: ${result.error}` }],
+          structuredContent: { error: result.error },
+          isError: true,
+        };
+      }
+
+      const msg = `Pipeline of ${result.total} steps started (pipeline_id: ${result.pipeline_id}). Poll replicate_pipeline_status to check progress.`;
+      return {
+        content: [{ type: "text", text: msg }],
+        structuredContent: {
+          pipeline_id: result.pipeline_id,
+          total: result.total,
+          message: msg,
+        },
+      };
+    } catch (err) {
+      return formatError(err);
+    }
+  },
+);
+
+/* ---------- Tool: pipeline_status ---------- */
+
+server.registerTool(
+  "replicate_pipeline_status",
+  {
+    title: "Get Pipeline Status",
+    description: `Poll the status of a pipeline started with replicate_pipeline_start.
+
+Args:
+  - pipeline_id (string): Pipeline ID returned by replicate_pipeline_start.
+  - include_outputs (boolean, default true): Include full PredictionResult per step. Set false for a counts-only summary while the pipeline is running.
+
+Returns structuredContent:
+  {
+    pipeline_id, overall_status, total, succeeded, failed, skipped, running, pending,
+    created_at, expires_at,
+    steps: [{ id, model, status, prediction_id, result?, error?, skip_reason?, started_at, completed_at }]
+  }
+
+overall_status:
+  "running"   — steps still executing
+  "completed" — all steps succeeded
+  "partial"   — all done, at least one failed or was skipped (due to a failed dependency)
+  "failed"    — pipeline-level error (e.g. cycle detected)
+
+Tip: Poll every 10–30 seconds until overall_status is "completed" or "partial".`,
+    inputSchema: PipelineStatusInputSchema.shape,
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+  },
+  async (params: PipelineStatusInput): Promise<ToolResponse> => {
+    const pipeline = getPipeline(params.pipeline_id);
+    if (!pipeline) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error: Pipeline "${params.pipeline_id}" not found or expired. State is in-memory — it may have been lost if the server restarted, or the TTL elapsed.`,
+          },
+        ],
+        structuredContent: { error: "Pipeline not found or expired", pipeline_id: params.pipeline_id },
+        isError: true,
+      };
+    }
+
+    const includeOutputs = params.include_outputs ?? true;
+    const steps = includeOutputs
+      ? pipeline.steps
+      : pipeline.steps.map((s) => ({
+          id: s.id,
+          model: s.model,
+          status: s.status,
+          prediction_id: s.prediction_id,
+          error: s.error,
+          skip_reason: s.skip_reason,
+          started_at: s.started_at,
+          completed_at: s.completed_at,
+        }));
+
+    const summary =
+      `Pipeline ${pipeline.pipeline_id} — ${pipeline.overall_status}\n` +
+      `${pipeline.succeeded}/${pipeline.total} succeeded, ${pipeline.failed} failed, ` +
+      `${pipeline.skipped} skipped, ${pipeline.running} running, ${pipeline.pending} pending`;
+
+    return {
+      content: [{ type: "text", text: summary }],
+      structuredContent: {
+        pipeline_id: pipeline.pipeline_id,
+        overall_status: pipeline.overall_status,
+        total: pipeline.total,
+        succeeded: pipeline.succeeded,
+        failed: pipeline.failed,
+        skipped: pipeline.skipped,
+        running: pipeline.running,
+        pending: pipeline.pending,
+        created_at: pipeline.created_at,
+        expires_at: pipeline.expires_at,
+        steps,
+      },
+    };
+  },
+);
+
 /* ---------- Tool: batch_start ---------- */
 
 server.registerTool(
@@ -1860,6 +2028,7 @@ async function main(): Promise<void> {
     });
   }
   startGC();
+  startPipelineGC();
 
   // Optional webhook receiver — when REPLICATE_WEBHOOK_PUBLIC_URL is set
   // we run a small HTTP listener so Replicate can POST completed
