@@ -16,24 +16,41 @@ Once installed in Claude Desktop, you can simply ask:
 
 ## What's inside
 
-19 tools, designed to be both ergonomic for common cases and fully open-ended for everything else:
+29 tools and 62 curated models, designed to be both ergonomic for common cases and fully open-ended for everything else:
 
 ### Curated generation tools
 
 | Tool | Purpose |
 |---|---|
-| `replicate_generate_image` | Text → image. Curated: Flux Schnell / Dev / Pro, SD 3.5, Recraft v3, Ideogram v2, Imagen 3. |
-| `replicate_generate_video` | Text (or image) → video. Curated: Kling Pro, Minimax, Hunyuan, Luma Ray, Wan 2.2. |
-| `replicate_generate_audio` | Text → music / songs. Curated: MusicGen, ACE-Step (full songs with lyrics), Riffusion. |
-| `replicate_generate_speech` | Text → speech (TTS). Curated: Kokoro, Minimax Speech, Chatterbox (voice cloning). |
-| `replicate_chat` | Text → text via LLM. Curated: Llama 3.1 405B / 70B / 8B, Mistral Large, Mixtral 8x7B, DeepSeek-R1. |
+| `replicate_generate_image` | Text → image. Curated: Flux Schnell / Dev / Pro / 2-Max, SD 3.5, Recraft v3 / v4.1, Seedream, Ideogram v2, Imagen 3. |
+| `replicate_generate_video` | Text (or image) → video. Curated: Kling Pro, Minimax, Hunyuan, Luma Ray, Wan 2.2, Grok Video, Seedance. |
+| `replicate_generate_audio` | Text → music / songs. Curated: MusicGen, ACE-Step (full songs with lyrics), Riffusion, MiniMax Music. |
+| `replicate_generate_speech` | Text → speech (TTS). Curated: Kokoro, Minimax Speech, Chatterbox, Gemini TTS, Grok TTS. |
+| `replicate_chat` | Text → text via LLM. Curated: Llama 3.1 405B / 70B / 8B, Mistral 7B, Mixtral 8x7B, DeepSeek-R1. |
 | `replicate_vision` | Image → text. Curated: LLaVA 13B / 1.6 34B, BLIP-2, Qwen2-VL. |
-| `replicate_upscale_image` | Image → higher-res image. Curated: Real-ESRGAN, Clarity Upscaler, SwinIR, GFPGAN. |
+| `replicate_upscale_image` | Image → higher-res image. Curated: Real-ESRGAN, Clarity Upscaler, Clarity Pro, SwinIR, GFPGAN. |
 | `replicate_remove_background` | Image → transparent PNG. Curated: rembg, BiRefNet, BRIA RMBG. |
-| `replicate_transcribe_audio` | Audio/video → text (Whisper, Distil-Whisper, WhisperX with diarization). |
+| `replicate_transcribe_audio` | Audio/video → text. Curated: Whisper, Distil-Whisper, WhisperX (diarization), ElevenLabs Scribe. |
 | `replicate_inpaint` | Mask-based image edit. Curated: Flux Fill Pro, SD inpaint, Ideogram v2 edit. |
 | `replicate_segment` | Image → mask. Curated: SAM 2, Grounded-SAM (text-prompt). |
 | `replicate_embed_text` | Text(s) → vector embeddings. Curated: BGE, Jina v3, MPNet. |
+
+### Voice, 3D, and avatar tools
+
+| Tool | Purpose |
+|---|---|
+| `replicate_clone_voice` | Text + reference sample → speech in a cloned voice. Curated: XTTS v2, OpenVoice v2. |
+| `replicate_generate_3d` | Text or image → 3D mesh (GLB/OBJ). Curated: Hunyuan 3D, Rodin, TripoSR. |
+| `replicate_lipsync` | Portrait + text/audio → lip-synced talking video. Curated: Video Avatar, SadTalker. |
+
+### Orchestration tools
+
+| Tool | Purpose |
+|---|---|
+| `replicate_batch_start` / `replicate_batch_status` | Run up to 50 predictions concurrently as a background job; poll progress + results. |
+| `replicate_pipeline_start` / `replicate_pipeline_status` | Run a DAG of predictions — independent steps in parallel, downstream steps wired via `"$stepId.urls[0]"` template refs. |
+| `replicate_recommend_model` | Rank curated models in a category by priority (speed / cost / quality / balanced) with cost estimates — advises which model to use. |
+| `replicate_refresh_models` | Discover popular Replicate models not yet in the curated registry. |
 
 ### Prediction management + cost
 
@@ -41,16 +58,17 @@ Once installed in Claude Desktop, you can simply ask:
 |---|---|
 | `replicate_list_predictions` | Recent prediction history (id, model, status, timestamps). |
 | `replicate_cancel_prediction` | Cancel an in-progress async job by id. |
-| `replicate_estimate_cost` | Pre-call USD estimate from a curated price table (40+ models). |
+| `replicate_estimate_cost` | Pre-call USD estimate from a curated price table. |
 
 ### Generic / discovery tools
 
 | Tool | Purpose |
 |---|---|
-| `replicate_run_model` | Run **any** Replicate model with arbitrary inputs (escape hatch for embeddings, segmentation, depth, ControlNet, 3D, speech-to-text, code, ...). |
+| `replicate_run_model` | Run **any** Replicate model with arbitrary inputs (escape hatch for anything not covered by a curated tool). |
 | `replicate_search_models` | Free-text search across the Replicate catalog. |
 | `replicate_get_model_schema` | Get the OpenAPI input schema for any model. |
 | `replicate_get_prediction` | Poll a long-running prediction (videos, long songs). |
+| `replicate_upload_file` | Upload a local file to Replicate storage; returns a URL to feed into other tools. |
 
 Outputs:
 - **Image / video / audio**: downloaded to `~/Downloads/replicate-mcp/<model>/<prediction_id>/` (configurable). Local paths and original Replicate URLs are both returned. For images, the response also includes an **inline base64 preview** plus three embed snippets (`<details>`-wrapped iframe viewer with Save button, responsive `<img>`, or markdown image) so the chat client can render the result inline at full size.
