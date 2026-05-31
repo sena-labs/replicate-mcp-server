@@ -25,6 +25,7 @@ import {
 import {
   resolveModel,
   getDefaultInput,
+  toCuratedKey,
   type ModelCategory,
   IMAGE_MODELS,
   VIDEO_MODELS,
@@ -530,7 +531,8 @@ Tip: If timeout_ms is exceeded, the result will have pending=true and a predicti
       const input: Record<string, unknown> = { prompt: p.prompt };
       if (p.image_url) {
         // Different video models use different field names for the start frame.
-        const field = VIDEO_IMAGE_INPUT_FIELD[p.model] ?? "start_image";
+        const key = toCuratedKey("video", p.model);
+        const field = VIDEO_IMAGE_INPUT_FIELD[key] ?? "start_image";
         input[field] = p.image_url;
       }
       if (p.duration_seconds) input["duration"] = p.duration_seconds;
@@ -581,9 +583,12 @@ Examples:
   makeGenerationHandler<GenerateAudioInput>({
     category: "audio",
     buildPromptInput: (p) => {
-      const promptField = AUDIO_PROMPT_FIELD[p.model] ?? "prompt";
+      // Normalise to the curated key so field maps work even when the caller
+      // passes a full "owner/name" id instead of the short key.
+      const key = toCuratedKey("audio", p.model);
+      const promptField = AUDIO_PROMPT_FIELD[key] ?? "prompt";
       const input: Record<string, unknown> = { [promptField]: p.prompt };
-      if (p.duration_seconds != null && !AUDIO_NO_DURATION.has(p.model)) {
+      if (p.duration_seconds != null && !AUDIO_NO_DURATION.has(key)) {
         input["duration"] = p.duration_seconds;
       }
       return input;
@@ -1108,8 +1113,9 @@ Examples:
   makeGenerationHandler<CloneVoiceInput>({
     category: "voiceclone",
     buildPromptInput: (p) => {
-      const textField = VOICE_CLONE_TEXT_FIELD[p.model] ?? "text";
-      const refField = VOICE_CLONE_REF_FIELD[p.model] ?? "speaker_wav";
+      const key = toCuratedKey("voiceclone", p.model);
+      const textField = VOICE_CLONE_TEXT_FIELD[key] ?? "text";
+      const refField = VOICE_CLONE_REF_FIELD[key] ?? "speaker_wav";
       const input: Record<string, unknown> = {
         [textField]: p.text,
         [refField]: p.reference_audio_url,
@@ -1163,7 +1169,8 @@ Examples:
       if (!p.prompt && !p.image_url) {
         throw new Error("Provide at least one of prompt or image_url.");
       }
-      const imageField = THREED_IMAGE_FIELD[p.model] ?? "image";
+      const key = toCuratedKey("threed", p.model);
+      const imageField = THREED_IMAGE_FIELD[key] ?? "image";
       const input: Record<string, unknown> = {};
       if (p.prompt) input["prompt"] = p.prompt;
       if (p.image_url) input[imageField] = p.image_url;
@@ -1228,14 +1235,15 @@ Examples:
       if (!p.text && !p.audio_url) {
         throw new Error("Provide at least one of text or audio_url.");
       }
-      const imageField = LIPSYNC_IMAGE_FIELD[p.model] ?? "image";
+      const key = toCuratedKey("lipsync", p.model);
+      const imageField = LIPSYNC_IMAGE_FIELD[key] ?? "image";
       const input: Record<string, unknown> = { [imageField]: p.image_url };
-      if (p.text && !LIPSYNC_NO_TEXT.has(p.model)) {
-        const textField = LIPSYNC_TEXT_FIELD[p.model] ?? "text";
+      if (p.text && !LIPSYNC_NO_TEXT.has(key)) {
+        const textField = LIPSYNC_TEXT_FIELD[key] ?? "text";
         input[textField] = p.text;
       }
       if (p.audio_url) {
-        const audioField = LIPSYNC_AUDIO_FIELD[p.model] ?? "audio";
+        const audioField = LIPSYNC_AUDIO_FIELD[key] ?? "audio";
         input[audioField] = p.audio_url;
       }
       return input;

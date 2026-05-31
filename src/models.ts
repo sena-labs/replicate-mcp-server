@@ -511,3 +511,28 @@ export function getCategoryModels(
 ): Record<string, CuratedModel> {
   return REGISTRY[category];
 }
+
+/** Normalise a model reference to its curated short key when possible.
+ *
+ *  Per-model field maps (e.g. AUDIO_PROMPT_FIELD, VIDEO_IMAGE_INPUT_FIELD) are
+ *  keyed on short keys like "riffusion". When a caller passes the full id
+ *  ("riffusion/riffusion") instead, a raw map lookup misses and the wrong
+ *  field name is used. This resolves either form back to the curated key:
+ *   - already a known short key → returned unchanged
+ *   - a full "owner/name[:version]" matching a curated model → that model's key
+ *   - otherwise → returned unchanged (unknown model; caller uses defaults)
+ */
+export function toCuratedKey(
+  category: ModelCategory,
+  modelKeyOrId: string,
+): string {
+  const registry = REGISTRY[category];
+  if (modelKeyOrId in registry) return modelKeyOrId;
+  // Strip an optional ":version" suffix before matching ids.
+  const colon = modelKeyOrId.indexOf(":");
+  const bareId = colon >= 0 ? modelKeyOrId.slice(0, colon) : modelKeyOrId;
+  for (const [key, m] of Object.entries(registry)) {
+    if (m.id === bareId) return key;
+  }
+  return modelKeyOrId;
+}
