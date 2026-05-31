@@ -40,6 +40,15 @@ interface WorkerOpts {
 
 const pipelines = new Map<string, Pipeline>();
 
+/** Delete pipelines whose TTL has elapsed. Called eagerly on each create and
+ *  periodically by startPipelineGC so memory stays bounded between intervals. */
+function purgeExpiredPipelines(): void {
+  const now = new Date();
+  for (const [id, p] of pipelines) {
+    if (new Date(p.expires_at) < now) pipelines.delete(id);
+  }
+}
+
 /** Scan input values recursively for "$stepId.*" references; return unique step IDs. */
 export function inferDeps(input: Record<string, unknown>): string[] {
   const refs = new Set<string>();
@@ -158,11 +167,19 @@ export function createPipeline(opts: {
 
   const pipelineSteps: PipelineStep[] = [];
   for (const s of opts.steps) {
-    const deps = s.depends_on ?? inferDeps(s.input);
-    for (const dep of deps) {
-      if (!allIds.has(dep)) {
-        return { error: `Step "${s.id}" depends_on unknown step "${dep}"` };
+    let deps: string[];
+    if (s.depends_on !== undefined) {
+      // Explicit deps are strict — an unknown ref is an error (catches typos).
+      for (const dep of s.depends_on) {
+        if (!allIds.has(dep)) {
+          return { error: `Step "${s.id}" depends_on unknown step "${dep}"` };
+        }
       }
+      deps = s.depends_on;
+    } else {
+      // Inferred deps keep only $-refs that match a real step. A $-prefixed
+      // value that isn't a known step (e.g. "$5.99") is a literal, not a ref.
+      deps = inferDeps(s.input).filter((d) => allIds.has(d));
     }
     pipelineSteps.push({ id: s.id, model: s.model, input: s.input, depends_on: deps, status: "pending" });
   }
@@ -187,6 +204,7 @@ export function createPipeline(opts: {
     steps: pipelineSteps,
   };
 
+  purgeExpiredPipelines(); // bound memory: drop stale jobs before adding a new one
   pipelines.set(pipeline.pipeline_id, pipeline);
 
   // Defer worker start so caller receives pipeline with stable initial state.
@@ -213,12 +231,7 @@ export function getPipeline(pipelineId: string): Pipeline | undefined {
 
 export function startPipelineGC(): void {
   // .unref() prevents this interval from keeping the process alive when idle.
-  setInterval(() => {
-    const now = new Date();
-    for (const [id, p] of pipelines) {
-      if (new Date(p.expires_at) < now) pipelines.delete(id);
-    }
-  }, 10 * 60 * 1000).unref();
+  setInterval(purgeExpiredPipelines, 10 * 60 * 1000).unref();
 }
 
 async function runPipelineWorker(pipeline: Pipeline, opts: WorkerOpts): Promise<void> {

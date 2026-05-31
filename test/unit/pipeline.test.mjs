@@ -181,6 +181,35 @@ test("createPipeline — rejects unknown step in depends_on", () => {
   assert.ok(result.error.includes("nonexistent"), `Expected unknown-dep error, got: ${result.error}`);
 });
 
+test("createPipeline — inferred $-literal (e.g. price) is not treated as a dependency", () => {
+  // "$5.99" looks ref-shaped but no step "5" exists. With no explicit
+  // depends_on, it must be ignored (treated as a literal), not rejected.
+  const p = createPipeline({
+    steps: [{ id: "a", model: "o/m", input: { label: "$5.99 total", n: 1 } }],
+    concurrency: 1,
+    download: false,
+    timeoutMsPerStep: 5_000,
+    ttlHours: 1,
+  });
+  assert.ok(!("error" in p), `Expected pipeline, got error: ${"error" in p ? p.error : ""}`);
+  assert.deepEqual(p.steps[0].depends_on, []);
+});
+
+test("createPipeline — inferred real ref still becomes a dependency", () => {
+  const p = createPipeline({
+    steps: [
+      { id: "gen", model: "o/m", input: { prompt: "x" } },
+      { id: "use", model: "o/m", input: { image: "$gen.urls[0]", price: "$9.99" } },
+    ],
+    concurrency: 1,
+    download: false,
+    timeoutMsPerStep: 5_000,
+    ttlHours: 1,
+  });
+  assert.ok(!("error" in p));
+  assert.deepEqual(p.steps[1].depends_on, ["gen"]);
+});
+
 test("createPipeline — expires_at is ttlHours after created_at", () => {
   const before = Date.now();
   const p = createPipeline({

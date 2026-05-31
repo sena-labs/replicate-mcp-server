@@ -34,6 +34,15 @@ interface WorkerOpts {
 
 const jobs = new Map<string, BatchJob>();
 
+/** Delete jobs whose TTL has elapsed. Called eagerly on each create and
+ *  periodically by startGC so memory stays bounded between intervals. */
+function purgeExpiredJobs(): void {
+  const now = new Date();
+  for (const [id, job] of jobs) {
+    if (new Date(job.expires_at) < now) jobs.delete(id);
+  }
+}
+
 export function createBatchJob(opts: {
   items: Array<{ model: string; input: Record<string, unknown> }>;
   concurrency: number;
@@ -63,6 +72,7 @@ export function createBatchJob(opts: {
     items: batchItems,
   };
 
+  purgeExpiredJobs(); // bound memory: drop stale jobs before adding a new one
   jobs.set(job.job_id, job);
 
   const inputs = opts.items.map((i) => i.input);
@@ -90,14 +100,7 @@ export function getBatchJob(jobId: string): BatchJob | undefined {
 
 export function startGC(): void {
   // .unref() prevents this interval from keeping the process alive when idle.
-  setInterval(() => {
-    const now = new Date();
-    for (const [id, job] of jobs) {
-      if (new Date(job.expires_at) < now) {
-        jobs.delete(id);
-      }
-    }
-  }, 10 * 60 * 1000).unref();
+  setInterval(purgeExpiredJobs, 10 * 60 * 1000).unref();
 }
 
 async function runBatchWorker(
