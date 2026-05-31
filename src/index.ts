@@ -1619,8 +1619,9 @@ Returns structuredContent:
 overall_status:
   "running"   — steps still executing
   "completed" — all steps succeeded
-  "partial"   — all done, at least one failed or was skipped (due to a failed dependency)
-  "failed"    — pipeline-level error (e.g. cycle detected)
+  "partial"   — all done, at least one failed or was skipped (failed dependency or budget error)
+
+Note: pipeline-level errors (cycle detected, unknown depends_on) are rejected at replicate_pipeline_start with an error response — they never produce a pollable pipeline.
 
 Tip: Poll every 10–30 seconds until overall_status is "completed" or "partial".`,
     inputSchema: PipelineStatusInputSchema.shape,
