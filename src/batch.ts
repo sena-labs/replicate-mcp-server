@@ -71,6 +71,8 @@ export function createBatchJob(opts: {
     download: opts.download,
     timeoutMsPerItem: opts.timeoutMsPerItem,
   };
+  // Defer worker start past the current tick so createBatchJob returns
+  // the job with its initial state before any counter mutations begin.
   setImmediate(() => void runBatchWorker(job, inputs, workerOpts));
 
   return job;
@@ -87,6 +89,7 @@ export function getBatchJob(jobId: string): BatchJob | undefined {
 }
 
 export function startGC(): void {
+  // .unref() prevents this interval from keeping the process alive when idle.
   setInterval(() => {
     const now = new Date();
     for (const [id, job] of jobs) {
@@ -94,7 +97,7 @@ export function startGC(): void {
         jobs.delete(id);
       }
     }
-  }, 10 * 60 * 1000);
+  }, 10 * 60 * 1000).unref();
 }
 
 async function runBatchWorker(
