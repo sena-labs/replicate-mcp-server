@@ -1,5 +1,7 @@
 # Replicate MCP Server
 
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20this%20project-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/senalabs)
+
 An [MCP](https://modelcontextprotocol.io) server that gives Claude native access to the full [Replicate](https://replicate.com) catalog: image generation, video, music, speech, upscaling, segmentation, LLMs — anything Replicate hosts.
 
 Once installed in Claude Desktop, you can simply ask:
@@ -387,6 +389,14 @@ npm run build
 node --test test/unit/*.test.mjs    # 43 unit tests on pure helpers
 node test/stdio-test.mjs            # End-to-end MCP handshake + tool/list + tool/call sanity check
 ```
+
+---
+
+## Support
+
+If this project is useful to you, consider supporting its development:
+
+☕ [**ko-fi.com/senalabs**](https://ko-fi.com/senalabs)
 
 ---
 
