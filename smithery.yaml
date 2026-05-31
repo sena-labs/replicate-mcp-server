@@ -8,7 +8,7 @@ description: |
   Gives Claude native access to the full Replicate catalog — image, video,
   music, speech (TTS + STT), LLMs, vision, upscale, inpaint, segment,
   embeddings, voice cloning, 3D generation, lipsync/avatar, and anything
-  else hosted on replicate.com. 24 tools, 62 curated models. Includes a
+  else hosted on replicate.com. 26 tools, 62 curated models. Includes a
   pre-call cost estimator, prediction history / cancel tools, multi-token
   round-robin pool, rate-limit awareness, and a webhook-friendly HTTP
   transport.
@@ -76,7 +76,7 @@ startCommand:
       },
     })
 
-# 24 tools registered. Keep this in sync with src/index.ts.
+# 26 tools registered. Keep this in sync with src/index.ts.
 tools:
   - replicate_generate_image
   - replicate_generate_video
@@ -94,6 +94,8 @@ tools:
   - replicate_generate_3d
   - replicate_lipsync
   - replicate_refresh_models
+  - replicate_batch_start
+  - replicate_batch_status
   - replicate_list_predictions
   - replicate_cancel_prediction
   - replicate_estimate_cost
