@@ -30,10 +30,15 @@ export interface BatchJob {
   items: BatchItem[];
 }
 
+/** Signature of the prediction runner. Injectable so the worker can be
+ *  unit-tested with a fake; defaults to the real Replicate call. */
+type PredictFn = typeof runPrediction;
+
 interface WorkerOpts {
   concurrency: number;
   download: boolean;
   timeoutMsPerItem: number;
+  predict: PredictFn;
 }
 
 const jobs = new Map<string, BatchJob>();
@@ -53,6 +58,8 @@ export function createBatchJob(opts: {
   download: boolean;
   timeoutMsPerItem: number;
   ttlHours: number;
+  /** Test seam: override the prediction runner. Defaults to runPrediction. */
+  _predict?: PredictFn;
 }): BatchJob {
   const now = new Date();
   const expires = new Date(now.getTime() + opts.ttlHours * 60 * 60 * 1000);
@@ -84,6 +91,7 @@ export function createBatchJob(opts: {
     concurrency: opts.concurrency,
     download: opts.download,
     timeoutMsPerItem: opts.timeoutMsPerItem,
+    predict: opts._predict ?? runPrediction,
   };
   // Defer worker start past the current tick so createBatchJob returns
   // the job with its initial state before any counter mutations begin.
@@ -140,7 +148,7 @@ async function runBatchWorker(
         }
 
         try {
-          const result = await runPrediction({
+          const result = await opts.predict({
             model: item.model,
             input,
             download: opts.download,

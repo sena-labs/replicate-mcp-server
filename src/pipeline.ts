@@ -36,10 +36,15 @@ export interface Pipeline {
   steps: PipelineStep[];
 }
 
+/** Signature of the prediction runner. Injectable so the DAG worker can be
+ *  unit-tested with a fake; defaults to the real Replicate call. */
+type PredictFn = typeof runPrediction;
+
 interface WorkerOpts {
   concurrency: number;
   download: boolean;
   timeoutMsPerStep: number;
+  predict: PredictFn;
 }
 
 const pipelines = new Map<string, Pipeline>();
@@ -184,6 +189,8 @@ export function createPipeline(opts: {
   download: boolean;
   timeoutMsPerStep: number;
   ttlHours: number;
+  /** Test seam: override the prediction runner. Defaults to runPrediction. */
+  _predict?: PredictFn;
 }): Pipeline | { error: string } {
   const allIds = new Set(opts.steps.map((s) => s.id));
 
@@ -240,6 +247,7 @@ export function createPipeline(opts: {
       concurrency: opts.concurrency,
       download: opts.download,
       timeoutMsPerStep: opts.timeoutMsPerStep,
+      predict: opts._predict ?? runPrediction,
     }),
   );
 
@@ -302,7 +310,7 @@ async function runPipelineWorker(pipeline: Pipeline, opts: WorkerOpts): Promise<
 
     try {
       const resolvedInput = resolveInput(step.input, results);
-      const result = await runPrediction({
+      const result = await opts.predict({
         model: step.model,
         input: resolvedInput,
         download: opts.download,
