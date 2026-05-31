@@ -45,7 +45,9 @@ export function inferDeps(input: Record<string, unknown>): string[] {
   const refs = new Set<string>();
   function scan(value: unknown): void {
     if (typeof value === "string") {
-      const match = /^\$([^.[]+)/.exec(value);
+      // Require "$stepId." shape (dot after id) so plain "$5 bill" strings
+      // aren't mistaken for step references.
+      const match = /^\$([^.[]+)\./.exec(value);
       if (match) refs.add(match[1]!);
     } else if (Array.isArray(value)) {
       value.forEach(scan);

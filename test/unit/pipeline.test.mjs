@@ -30,6 +30,11 @@ test("inferDeps — returns empty array for inputs with no refs", () => {
   assert.deepEqual(deps, []);
 });
 
+test("inferDeps — ignores plain $-prefixed strings that are not refs", () => {
+  const deps = inferDeps({ price: "$5 bill", note: "$100", prompt: "cost is $$$" });
+  assert.deepEqual(deps, []);
+});
+
 test("inferDeps — scans nested objects and arrays recursively", () => {
   const deps = inferDeps({
     nested: { url: "$gen.urls[0]" },
