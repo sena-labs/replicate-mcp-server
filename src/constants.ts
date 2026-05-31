@@ -26,14 +26,20 @@ export const MAX_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes hard cap
 export const MAX_DOWNLOAD_BYTES = 500 * 1024 * 1024; // 500 MB
 
 /** Maximum size of a single image inlined as base64 in a tool response.
- *  Larger images skip inline preview but still surface via local_paths /
- *  URL embed. Keeps individual stdio frames bounded. */
-export const MAX_INLINE_IMAGE_BYTES = 8 * 1024 * 1024; // 8 MB
+ *  Larger images skip the inline preview but still surface via local_paths /
+ *  URL embed (which render the image inline anyway).
+ *
+ *  Sized for Claude Desktop's hard 1 MB tool-result limit: base64 inflates raw
+ *  bytes by ~37%, so 600 KB raw ≈ 820 KB base64 — leaving headroom for the
+ *  structuredContent JSON + caption text under 1 MB. */
+export const MAX_INLINE_IMAGE_BYTES = 600 * 1024; // 600 KB raw (~820 KB base64)
 
-/** Aggregate cap across all inline images in one tool response. Prevents
- *  multi-output predictions (num_outputs = 4) from pushing 32 MB+ of
- *  base64 over stdio in a single frame. */
-export const MAX_INLINE_IMAGES_TOTAL_BYTES = 12 * 1024 * 1024; // 12 MB
+/** Aggregate cap across all inline images in one tool response (measured on
+ *  the base64 length). Must be ≥ the per-image base64 size so a single image
+ *  at the per-image cap still inlines. Keeps the whole tool result under the
+ *  Claude Desktop 1 MB ceiling; multi-output predictions inline what fits and
+ *  surface the rest via URL embeds. */
+export const MAX_INLINE_IMAGES_TOTAL_BYTES = 850_000; // ~0.81 MB of base64
 
 /** Cap on parallel download workers per prediction to avoid EMFILE /
  *  network saturation when a model returns many outputs. */
