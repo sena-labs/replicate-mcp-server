@@ -1,5 +1,9 @@
 import { randomUUID } from "node:crypto";
-import { runPrediction, type PredictionResult } from "./replicate.js";
+import {
+  runPrediction,
+  predictionSucceeded,
+  type PredictionResult,
+} from "./replicate.js";
 import { checkBudget } from "./cost.js";
 
 export interface BatchItem {
@@ -144,8 +148,16 @@ async function runBatchWorker(
           });
           item.prediction_id = result.prediction_id;
           item.result = result;
-          item.status = result.status === "failed" ? "failed" : "succeeded";
-          if (result.error) item.error = result.error;
+          // Only a genuinely finished, successful prediction counts as success.
+          // Timed-out (pending) and canceled results are failures here.
+          item.status = predictionSucceeded(result) ? "succeeded" : "failed";
+          if (item.status === "failed" && !result.error) {
+            item.error = result.pending
+              ? "Prediction timed out (still running on Replicate)"
+              : `Prediction ended with status "${result.status}"`;
+          } else if (result.error) {
+            item.error = result.error;
+          }
           item.completed_at = new Date().toISOString();
           job.running--;
           if (item.status === "succeeded") job.succeeded++;

@@ -1,5 +1,9 @@
 import { randomUUID } from "node:crypto";
-import { runPrediction, type PredictionResult } from "./replicate.js";
+import {
+  runPrediction,
+  predictionSucceeded,
+  type PredictionResult,
+} from "./replicate.js";
 import { checkBudget } from "./cost.js";
 
 export type StepStatus = "pending" | "running" | "succeeded" | "failed" | "skipped";
@@ -303,8 +307,11 @@ async function runPipelineWorker(pipeline: Pipeline, opts: WorkerOpts): Promise<
     step.completed_at = new Date().toISOString();
     pipeline.running--;
 
+    // Only a genuinely finished, successful prediction lets downstream steps
+    // proceed. A timed-out (pending) or canceled result is a failure — feeding
+    // its empty output to dependents would cascade hollow inputs.
     const succeeded =
-      settled.result !== undefined && settled.result.status !== "failed";
+      settled.result !== undefined && predictionSucceeded(settled.result);
 
     if (succeeded) {
       step.status = "succeeded";
@@ -321,7 +328,14 @@ async function runPipelineWorker(pipeline: Pipeline, opts: WorkerOpts): Promise<
       }
     } else {
       step.status = "failed";
-      step.error = settled.error ?? settled.result?.error ?? "Unknown error";
+      step.error =
+        settled.error ??
+        settled.result?.error ??
+        (settled.result?.pending
+          ? "Step timed out (still running on Replicate)"
+          : settled.result
+            ? `Step ended with status "${settled.result.status}"`
+            : "Unknown error");
       if (settled.result) step.prediction_id = settled.result.prediction_id;
       pipeline.failed++;
       skipTransitiveDependents(pipeline, settled.id);

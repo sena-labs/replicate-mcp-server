@@ -132,6 +132,16 @@ export interface PredictionResult {
   pending?: boolean;
 }
 
+/** True only for a genuinely finished, successful prediction. A timed-out
+ *  result (status "starting"/"processing" with `pending: true`) or a
+ *  "canceled" result is NOT a success — callers (batch/pipeline workers) must
+ *  not treat those as completed, or they'd feed empty outputs downstream and
+ *  miscount results. Whitelist the success status rather than blacklisting
+ *  "failed". */
+export function predictionSucceeded(r: PredictionResult): boolean {
+  return r.status === "succeeded" && r.pending !== true;
+}
+
 /**
  * Create a prediction and wait up to `timeoutMs` for it to finish.
  *
