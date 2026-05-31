@@ -126,7 +126,12 @@ export function recommendModels(opts: {
     let tie: number;
     switch (opts.priority) {
       case "speed":
-        tie = (a.estCost ?? Infinity) - (b.estCost ?? Infinity);
+        // Cheaper wins the tie. Guard the both-null case — Infinity - Infinity
+        // is NaN, which would corrupt the comparator and the sort order.
+        tie =
+          a.estCost === null && b.estCost === null
+            ? 0
+            : (a.estCost ?? Infinity) - (b.estCost ?? Infinity);
         break;
       case "cost":
         tie = b.speedScore - a.speedScore;

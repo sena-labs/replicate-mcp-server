@@ -70,3 +70,17 @@ test("recommendModels — unknown category-free model keeps null cost without cr
   assert.ok(Array.isArray(recs));
   assert.ok(recs.length > 0);
 });
+
+test("recommendModels — speed priority with all-null costs sorts deterministically (no NaN)", () => {
+  // threed/voiceclone/lipsync have no price entries → every est_cost_usd null.
+  // The speed tiebreak (a.estCost ?? Infinity) - (b.estCost ?? Infinity) would
+  // be Infinity - Infinity = NaN without the guard, corrupting sort order.
+  const a = recommendModels({ category: "threed", priority: "speed" });
+  const b = recommendModels({ category: "threed", priority: "speed" });
+  assert.ok(a.length > 0);
+  for (const r of a) assert.equal(r.est_cost_usd, null);
+  // Deterministic: two identical calls yield identical key order.
+  assert.deepEqual(a.map((r) => r.key), b.map((r) => r.key));
+  // No NaN leaked into scores.
+  for (const r of a) assert.ok(!Number.isNaN(r.score));
+});
