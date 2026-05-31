@@ -1,3 +1,12 @@
+/**
+ * Model recommendation engine.
+ *
+ * Pure scoring over the curated registry — no I/O, no model execution.
+ * Ranks the models in a category by a stated priority (speed / cost /
+ * quality / balanced) using speed tiers and `estimateCost`, returning the
+ * top picks with cost estimates and human-readable reasons. The caller runs
+ * the chosen model via the existing specialized generate tools.
+ */
 import { estimateCost } from "./cost.js";
 import {
   getCategoryModels,
@@ -114,16 +123,24 @@ export function recommendModels(opts: {
 
   scored.sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score;
+    let tie: number;
     switch (opts.priority) {
       case "speed":
-        return (a.estCost ?? Infinity) - (b.estCost ?? Infinity);
+        tie = (a.estCost ?? Infinity) - (b.estCost ?? Infinity);
+        break;
       case "cost":
-        return b.speedScore - a.speedScore;
+        tie = b.speedScore - a.speedScore;
+        break;
       case "quality":
-        return (b.estCost ?? 0) - (a.estCost ?? 0);
+        tie = (b.estCost ?? 0) - (a.estCost ?? 0);
+        break;
       default:
-        return b.speedScore - a.speedScore;
+        tie = b.speedScore - a.speedScore;
+        break;
     }
+    // Final tiebreak on key keeps ranking deterministic regardless of
+    // registry iteration order.
+    return tie !== 0 ? tie : a.key.localeCompare(b.key);
   });
 
   return scored.slice(0, 5).map((s) => ({
