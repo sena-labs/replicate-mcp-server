@@ -704,6 +704,72 @@ export const RefreshModelsInputSchema = z
   })
   .strict();
 
+/* ---------- Batch async jobs ---------- */
+
+export const BatchStartInputSchema = z
+  .object({
+    items: z
+      .array(
+        z
+          .object({
+            model: z
+              .string()
+              .min(1)
+              .describe(
+                'Replicate model identifier: "owner/name" or "owner/name:version". Full ID required — curated shortcuts not supported here.',
+              ),
+            input: z
+              .record(z.unknown())
+              .describe("Model input parameters as a JSON object."),
+          })
+          .strict(),
+      )
+      .min(1)
+      .max(50)
+      .describe("Predictions to run. 1–50 items."),
+    concurrency: z
+      .number()
+      .int()
+      .min(1)
+      .max(10)
+      .default(3)
+      .describe("Max simultaneous predictions (1–10). Default: 3."),
+    download: z
+      .boolean()
+      .default(true)
+      .describe("Download output files locally. Default: true."),
+    timeout_ms_per_item: z
+      .number()
+      .int()
+      .min(5_000)
+      .max(MAX_TIMEOUT_MS)
+      .default(300_000)
+      .describe("Per-prediction timeout in ms (5000–1800000). Default: 300000 (5min)."),
+    ttl_hours: z
+      .number()
+      .int()
+      .min(1)
+      .max(72)
+      .default(1)
+      .describe("How long to keep job results in memory (1–72h). Default: 1h. State is lost if the server restarts."),
+  })
+  .strict();
+
+export const BatchStatusInputSchema = z
+  .object({
+    job_id: z
+      .string()
+      .min(1)
+      .describe("Job ID returned by replicate_batch_start."),
+    include_results: z
+      .boolean()
+      .default(true)
+      .describe(
+        "Include full PredictionResult per completed item. Set false to get counts-only summary for large batches. Default: true.",
+      ),
+  })
+  .strict();
+
 /* ---------- Inferred types ---------- */
 
 export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
@@ -730,3 +796,5 @@ export type CloneVoiceInput = z.infer<typeof CloneVoiceInputSchema>;
 export type Generate3DInput = z.infer<typeof Generate3DInputSchema>;
 export type LipsyncInput = z.infer<typeof LipsyncInputSchema>;
 export type RefreshModelsInput = z.infer<typeof RefreshModelsInputSchema>;
+export type BatchStartInput = z.infer<typeof BatchStartInputSchema>;
+export type BatchStatusInput = z.infer<typeof BatchStatusInputSchema>;
