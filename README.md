@@ -70,11 +70,19 @@ Once installed in Claude Desktop, you can simply ask:
 | `replicate_search_models` | Free-text search across the Replicate catalog. |
 | `replicate_get_model_schema` | Get the OpenAPI input schema for any model. |
 | `replicate_get_prediction` | Poll a long-running prediction (videos, long songs). |
-| `replicate_upload_file` | Upload a local file to Replicate storage; returns a URL to feed into other tools. |
+| `replicate_upload_file` | Upload a file to Replicate storage (by local `file_path` **or** `base64_data` / data URI); returns a URL to feed into other tools. |
 
 Outputs:
-- **Image / video / audio**: downloaded to `~/Downloads/replicate-mcp/<model>/<prediction_id>/` (configurable). Local paths and original Replicate URLs are both returned. For images, the response also includes an **inline base64 preview** plus three embed snippets (`<details>`-wrapped iframe viewer with Save button, responsive `<img>`, or markdown image) so the chat client can render the result inline at full size.
+- **Image / video / audio**: downloaded to `~/Downloads/replicate-mcp/<model>/<prediction_id>/` (configurable). Local paths and original Replicate URLs are both returned. For images, the response also includes an **inline base64 preview** (sized to stay under Claude Desktop's 1 MB tool-result limit; larger images fall back to the URL embed) plus three embed snippets (`<details>`-wrapped iframe viewer with Save button, responsive `<img>`, or markdown image) so the chat client can render the result inline at full size.
 - **Text** (LLM, vision, classifier): the model's reply is surfaced in `text_output` and printed at the top of the tool response so Claude can read it directly.
+
+### Editing an image you have on hand
+
+The editing tools (`replicate_upscale_image`, `replicate_inpaint`, `replicate_remove_background`, `replicate_vision`, image-to-video, lipsync, 3D-from-image) all take a **URL**. To turn a file into a URL, use `replicate_upload_file`:
+
+- **You have a local path** (Claude Desktop): `replicate_upload_file({ file_path: "C:/Users/you/photo.jpg" })` → URL → pass to the editing tool. If an image is dragged/pasted into the chat, save it to disk first — the server cannot read chat attachments directly, and Claude Desktop cannot reproduce a large image's exact bytes as a tool argument.
+- **You have the bytes in memory** (claude.ai web with a code container): read the uploaded file in the container, base64-encode it, then `replicate_upload_file({ base64_data: "data:image/png;base64,..." })` → URL → editing tool. `base64_data` accepts a bare base64 string or a full `data:<mime>;base64,...` URI.
+- **You already have a URL**: pass it straight to the editing tool — no upload needed.
 
 ---
 
