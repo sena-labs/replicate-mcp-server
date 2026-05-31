@@ -890,7 +890,9 @@ export const RecommendModelInputSchema = z
       .number()
       .gt(0)
       .optional()
-      .describe("Optional cap — exclude models whose estimated cost exceeds this."),
+      .describe(
+        "Optional cap — exclude models whose estimated cost exceeds this. Models with unknown pricing are always included regardless of this cap.",
+      ),
     duration_seconds: z
       .number()
       .min(1)
