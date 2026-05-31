@@ -91,6 +91,8 @@ async function run() {
   else {
     const names = list.result.tools.map((t) => t.name).sort();
     const expected = [
+      "replicate_batch_start",
+      "replicate_batch_status",
       "replicate_cancel_prediction",
       "replicate_chat",
       "replicate_clone_voice",
@@ -120,7 +122,7 @@ async function run() {
     const extra = names.filter((n) => !expected.includes(n));
     if (missing.length) fail("missing tools: " + missing.join(","));
     if (extra.length) fail("unexpected tools: " + extra.join(","));
-    if (!missing.length && !extra.length) ok(`tools/list -> 24 tools registered`);
+    if (!missing.length && !extra.length) ok(`tools/list -> 26 tools registered`);
 
     for (const t of list.result.tools) {
       if (!t.inputSchema) fail(`${t.name}: no inputSchema`);

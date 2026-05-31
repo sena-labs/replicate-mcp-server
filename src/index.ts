@@ -67,6 +67,10 @@ import {
   Generate3DInputSchema,
   LipsyncInputSchema,
   RefreshModelsInputSchema,
+  BatchStartInputSchema,
+  BatchStatusInputSchema,
+  type BatchStartInput,
+  type BatchStatusInput,
   type RefreshModelsInput,
   type GenerateImageInput,
   type GenerateVideoInput,
@@ -106,6 +110,7 @@ import {
 import { estimateCost, checkBudget } from "./cost.js";
 import { webhookEnabled } from "./webhook.js";
 import { logger } from "./logger.js";
+import { createBatchJob, getBatchJob, startGC } from "./batch.js";
 
 /* ---------- Server setup ---------- */
 
@@ -1511,6 +1516,150 @@ Returns structuredContent: { url, file_id, name }
   },
 );
 
+/* ---------- Tool: batch_start ---------- */
+
+server.registerTool(
+  "replicate_batch_start",
+  {
+    title: "Start Async Batch Predictions",
+    description: `Run multiple Replicate predictions in parallel as a background job. Returns a job_id immediately — the predictions run in the background. Poll replicate_batch_status for progress and results.
+
+Use this when you have 2–50 predictions to run and don't want to block. Each item specifies its own model and input, so you can mix models in one batch.
+
+IMPORTANT: model must be a full Replicate identifier ("owner/name" or "owner/name:version"), not a curated shortcut like "flux-schnell". Use replicate_get_model_schema to look up the correct identifier.
+
+Args:
+  - items (array, 1–50): Predictions to run. Each: { model: "owner/name[:version]", input: {...} }.
+  - concurrency (1–10, default 3): Max simultaneous predictions. Raise with caution — Replicate rate-limits free accounts.
+  - download (boolean, default true): Download output files locally.
+  - timeout_ms_per_item (default 300000): Per-prediction timeout. Timed-out items have pending=true in their result.
+  - ttl_hours (1–72, default 1): How long to keep results in memory. Job state is lost if the MCP server restarts.
+
+Returns: { job_id, total, message }
+
+Example:
+  items=[
+    { model: "black-forest-labs/flux-schnell", input: { prompt: "a red fox" } },
+    { model: "black-forest-labs/flux-schnell", input: { prompt: "a blue whale" } },
+  ]
+  → Returns { job_id: "abc-123", total: 2, message: "..." }
+  → Then poll: replicate_batch_status({ job_id: "abc-123" })`,
+    inputSchema: BatchStartInputSchema.shape,
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: true,
+    },
+  },
+  async (params: BatchStartInput): Promise<ToolResponse> => {
+    try {
+      const job = createBatchJob({
+        items: params.items,
+        concurrency: params.concurrency ?? 3,
+        download: params.download,
+        timeoutMsPerItem: params.timeout_ms_per_item ?? 300_000,
+        ttlHours: params.ttl_hours ?? 1,
+      });
+      const msg = `Batch of ${job.total} started (job_id: ${job.job_id}). Poll replicate_batch_status to check progress and retrieve results.`;
+      return {
+        content: [{ type: "text", text: msg }],
+        structuredContent: {
+          job_id: job.job_id,
+          total: job.total,
+          message: msg,
+        },
+      };
+    } catch (err) {
+      return formatError(err);
+    }
+  },
+);
+
+/* ---------- Tool: batch_status ---------- */
+
+server.registerTool(
+  "replicate_batch_status",
+  {
+    title: "Get Batch Job Status",
+    description: `Poll the status of an async batch job started with replicate_batch_start.
+
+Args:
+  - job_id (string): Job ID returned by replicate_batch_start.
+  - include_results (boolean, default true): Include full PredictionResult per item. Set false for a counts-only summary while the job is still running.
+
+Returns structuredContent:
+  {
+    job_id, overall_status, total, succeeded, failed, running, pending,
+    created_at, expires_at,
+    items: [{ index, model, status, prediction_id, result?, error?, started_at, completed_at }]
+  }
+
+overall_status:
+  "running"   — predictions still in progress
+  "completed" — all items succeeded
+  "partial"   — all done, at least one failed
+
+Tip: Poll every 10–30 seconds until overall_status is "completed" or "partial".`,
+    inputSchema: BatchStatusInputSchema.shape,
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+  },
+  async (params: BatchStatusInput): Promise<ToolResponse> => {
+    const job = getBatchJob(params.job_id);
+    if (!job) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error: Job "${params.job_id}" not found or expired. Job state is in-memory — it may have been lost if the server restarted, or the TTL elapsed.`,
+          },
+        ],
+        structuredContent: { error: "Job not found or expired", job_id: params.job_id },
+        isError: true,
+      };
+    }
+
+    const includeResults = params.include_results ?? true;
+    const items = includeResults
+      ? job.items
+      : job.items.map((item) => ({
+          index: item.index,
+          model: item.model,
+          status: item.status,
+          prediction_id: item.prediction_id,
+          error: item.error,
+          started_at: item.started_at,
+          completed_at: item.completed_at,
+        }));
+
+    const summary =
+      `Job ${job.job_id} — ${job.overall_status}\n` +
+      `${job.succeeded}/${job.total} succeeded, ${job.failed} failed, ` +
+      `${job.running} running, ${job.pending} pending`;
+
+    return {
+      content: [{ type: "text", text: summary }],
+      structuredContent: {
+        job_id: job.job_id,
+        overall_status: job.overall_status,
+        total: job.total,
+        succeeded: job.succeeded,
+        failed: job.failed,
+        running: job.running,
+        pending: job.pending,
+        created_at: job.created_at,
+        expires_at: job.expires_at,
+        items,
+      },
+    };
+  },
+);
+
 /* ---------- Tool: refresh_models ---------- */
 
 /** Maps each curated category to a Replicate search keyword. */
@@ -1710,6 +1859,7 @@ async function main(): Promise<void> {
       error: err instanceof Error ? err.message : String(err),
     });
   }
+  startGC();
 
   // Optional webhook receiver — when REPLICATE_WEBHOOK_PUBLIC_URL is set
   // we run a small HTTP listener so Replicate can POST completed
