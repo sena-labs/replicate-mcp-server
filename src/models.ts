@@ -503,3 +503,11 @@ export function getDefaultInput(
 ): Record<string, unknown> {
   return REGISTRY[category][modelKey]?.defaultInput ?? {};
 }
+
+/** Accessor for the curated models in a category. Used by the router
+ *  to score/rank without exposing the whole REGISTRY object. */
+export function getCategoryModels(
+  category: ModelCategory,
+): Record<string, CuratedModel> {
+  return REGISTRY[category];
+}
