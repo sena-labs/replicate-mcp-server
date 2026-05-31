@@ -64,6 +64,22 @@ test("resolveInput — resolves $step.urls[0] to first URL", () => {
   assert.equal(resolved.image, "https://cdn.example.com/out.webp");
 });
 
+test("resolveInput — throws on out-of-bounds index instead of forwarding undefined", () => {
+  const results = new Map([["gen", mockResult]]); // urls has 1 element
+  assert.throws(
+    () => resolveInput({ image: "$gen.urls[5]" }, results),
+    /out of bounds/,
+  );
+});
+
+test("resolveInput — throws when referenced field is missing on the output", () => {
+  const results = new Map([["gen", mockResult]]);
+  assert.throws(
+    () => resolveInput({ x: "$gen.nonexistent" }, results),
+    /not found/,
+  );
+});
+
 test("resolveInput — resolves $step.urls (full array)", () => {
   const results = new Map([["gen", mockResult]]);
   const resolved = resolveInput({ images: "$gen.urls" }, results);
@@ -179,6 +195,21 @@ test("createPipeline — rejects unknown step in depends_on", () => {
   });
   assert.ok("error" in result);
   assert.ok(result.error.includes("nonexistent"), `Expected unknown-dep error, got: ${result.error}`);
+});
+
+test("createPipeline — rejects duplicate step IDs", () => {
+  const result = createPipeline({
+    steps: [
+      { id: "dup", model: "o/m", input: {} },
+      { id: "dup", model: "o/m", input: {} },
+    ],
+    concurrency: 1,
+    download: false,
+    timeoutMsPerStep: 5_000,
+    ttlHours: 1,
+  });
+  assert.ok("error" in result);
+  assert.ok(result.error.includes("Duplicate"), `got: ${result.error}`);
 });
 
 test("createPipeline — inferred $-literal (e.g. price) is not treated as a dependency", () => {

@@ -15,6 +15,7 @@ import {
   MAX_INLINE_IMAGES_TOTAL_BYTES,
   DEFAULT_DOWNLOAD_DIR,
   POLL_INTERVAL_BY_CATEGORY,
+  MIN_HTTP_API_KEY_LENGTH,
 } from "./constants.js";
 import {
   buildIframeEmbed,
@@ -2131,9 +2132,12 @@ async function main(): Promise<void> {
         : undefined);
     // Enforce min-length on the env-var path (CLI path is already validated
     // by parseServerArgs).
-    if (rawApiKey !== undefined && rawApiKey.length < 16) {
+    if (
+      rawApiKey !== undefined &&
+      rawApiKey.length < MIN_HTTP_API_KEY_LENGTH
+    ) {
       throw new Error(
-        "HTTP API key is too short (minimum 16 characters). Set a stronger HTTP_API_KEY.",
+        `HTTP API key is too short (minimum ${MIN_HTTP_API_KEY_LENGTH} characters). Set a stronger HTTP_API_KEY.`,
       );
     }
     await startHttpTransport({

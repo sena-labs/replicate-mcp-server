@@ -17,6 +17,8 @@
  * Anything else is ignored so we don't break on unknown extensions.
  */
 
+import { MIN_HTTP_API_KEY_LENGTH } from "./constants.js";
+
 export interface ServerArgs {
   transport: "stdio" | "http";
   httpPort: number;
@@ -75,8 +77,13 @@ export function parseServerArgs(argv: readonly string[] = process.argv.slice(2))
   }
 
   // Validate API key length if provided — short keys are trivially guessable.
-  if (out.httpApiKey !== undefined && out.httpApiKey.length < 16) {
-    throw new Error("--api-key is too short (minimum 16 characters).");
+  if (
+    out.httpApiKey !== undefined &&
+    out.httpApiKey.length < MIN_HTTP_API_KEY_LENGTH
+  ) {
+    throw new Error(
+      `--api-key is too short (minimum ${MIN_HTTP_API_KEY_LENGTH} characters).`,
+    );
   }
 
   return out;

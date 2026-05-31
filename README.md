@@ -18,7 +18,7 @@ Once installed in Claude Desktop, you can simply ask:
 
 ## What's inside
 
-29 tools and 62 curated models, designed to be both ergonomic for common cases and fully open-ended for everything else:
+29 tools and 63 curated models, designed to be both ergonomic for common cases and fully open-ended for everything else:
 
 ### Curated generation tools
 

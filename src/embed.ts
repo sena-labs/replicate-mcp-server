@@ -89,8 +89,12 @@ export function buildImgEmbed(url: string): string {
 
 /** Markdown image — universal last resort. */
 export function buildMarkdownEmbed(url: string): string {
-  // Encode '(' and ')' so they cannot prematurely close the link target.
-  const safeUrl = url.replace(/[()]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
+  // Encode '(' ')' '[' ']' so a URL containing them can't prematurely close
+  // the link target or the alt-text bracket of ![alt](url).
+  const safeUrl = url.replace(
+    /[()[\]]/g,
+    (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`,
+  );
   return `![generated image](${safeUrl})`;
 }
 

@@ -113,10 +113,28 @@ export function resolveInput(
       if (!match) return value;
       const [, stepId, field, indexStr] = match;
       const result = results.get(stepId!);
+      // Dependency not resolved yet — leave the literal. The DAG guarantees
+      // deps finish first, so this only happens for refs to steps that failed.
       if (!result) return value;
       const fieldValue = (result as unknown as Record<string, unknown>)[field!];
       if (indexStr !== undefined) {
-        return Array.isArray(fieldValue) ? fieldValue[parseInt(indexStr, 10)] : undefined;
+        if (!Array.isArray(fieldValue)) {
+          throw new Error(
+            `Template "${value}": field "${field}" of step "${stepId}" is not an array`,
+          );
+        }
+        const idx = parseInt(indexStr, 10);
+        if (idx >= fieldValue.length) {
+          throw new Error(
+            `Template "${value}": index ${idx} out of bounds — step "${stepId}" field "${field}" has ${fieldValue.length} item(s)`,
+          );
+        }
+        return fieldValue[idx];
+      }
+      if (fieldValue === undefined) {
+        throw new Error(
+          `Template "${value}": field "${field}" not found on step "${stepId}" output`,
+        );
       }
       return fieldValue;
     } else if (Array.isArray(value)) {
@@ -168,6 +186,11 @@ export function createPipeline(opts: {
   ttlHours: number;
 }): Pipeline | { error: string } {
   const allIds = new Set(opts.steps.map((s) => s.id));
+
+  // Duplicate step IDs would collide in stepMap/results and deadlock dependents.
+  if (allIds.size !== opts.steps.length) {
+    return { error: "Duplicate step IDs — each step.id must be unique" };
+  }
 
   const pipelineSteps: PipelineStep[] = [];
   for (const s of opts.steps) {

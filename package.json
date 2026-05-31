@@ -48,11 +48,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/replicate-mcp-server"
+    "url": "https://github.com/sena-labs/replicate-mcp-server"
   },
-  "homepage": "https://github.com/your-org/replicate-mcp-server#readme",
+  "homepage": "https://github.com/sena-labs/replicate-mcp-server#readme",
   "bugs": {
-    "url": "https://github.com/your-org/replicate-mcp-server/issues"
+    "url": "https://github.com/sena-labs/replicate-mcp-server/issues"
   },
   "engines": {
     "node": ">=20.0.0"
