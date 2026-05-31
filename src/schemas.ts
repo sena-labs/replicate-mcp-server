@@ -770,6 +770,86 @@ export const BatchStatusInputSchema = z
   })
   .strict();
 
+/* ---------- Pipeline DAG ---------- */
+
+export const PipelineStartInputSchema = z
+  .object({
+    steps: z
+      .array(
+        z
+          .object({
+            id: z
+              .string()
+              .min(1)
+              .describe("Unique step name within this pipeline."),
+            model: z
+              .string()
+              .min(1)
+              .describe(
+                'Full Replicate model id: "owner/name" or "owner/name:version". Full id required — curated shortcuts not supported.',
+              ),
+            input: z
+              .record(z.unknown())
+              .describe(
+                'Model inputs. Use "$stepId.field[n]" to reference prior step outputs. E.g. "$gen.urls[0]", "$llm.text_output[0]".',
+              ),
+            depends_on: z
+              .array(z.string().min(1))
+              .optional()
+              .describe(
+                "Explicit dependency step IDs. When omitted, inferred automatically from $ref patterns in input.",
+              ),
+          })
+          .strict(),
+      )
+      .min(1)
+      .max(20)
+      .describe("Pipeline steps. 1–20 steps."),
+    concurrency: z
+      .number()
+      .int()
+      .min(1)
+      .max(5)
+      .default(3)
+      .describe("Max simultaneous steps (1–5). Default: 3."),
+    download: z
+      .boolean()
+      .default(true)
+      .describe("Download step outputs locally. Default: true."),
+    timeout_ms_per_step: z
+      .number()
+      .int()
+      .min(5_000)
+      .max(MAX_TIMEOUT_MS)
+      .default(300_000)
+      .describe("Per-step prediction timeout ms (5000–1800000). Default: 300000 (5min)."),
+    ttl_hours: z
+      .number()
+      .int()
+      .min(1)
+      .max(72)
+      .default(1)
+      .describe(
+        "How long to keep pipeline results in memory (1–72h). Default: 1h. State is lost if the server restarts.",
+      ),
+  })
+  .strict();
+
+export const PipelineStatusInputSchema = z
+  .object({
+    pipeline_id: z
+      .string()
+      .min(1)
+      .describe("Pipeline ID returned by replicate_pipeline_start."),
+    include_outputs: z
+      .boolean()
+      .default(true)
+      .describe(
+        "Include full PredictionResult per step. Set false for counts-only summary while pipeline is running. Default: true.",
+      ),
+  })
+  .strict();
+
 /* ---------- Inferred types ---------- */
 
 export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
@@ -798,3 +878,5 @@ export type LipsyncInput = z.infer<typeof LipsyncInputSchema>;
 export type RefreshModelsInput = z.infer<typeof RefreshModelsInputSchema>;
 export type BatchStartInput = z.infer<typeof BatchStartInputSchema>;
 export type BatchStatusInput = z.infer<typeof BatchStatusInputSchema>;
+export type PipelineStartInput = z.infer<typeof PipelineStartInputSchema>;
+export type PipelineStatusInput = z.infer<typeof PipelineStatusInputSchema>;
