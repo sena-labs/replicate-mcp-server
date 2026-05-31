@@ -967,15 +967,25 @@ function parseOwnerName(modelId: string): { owner: string; name: string } {
 
 /** Upload a local file to Replicate's file storage. Returns a URL valid for
  *  ~24 hours that can be used as an input to other Replicate models. */
-export async function uploadFile(
-  filePath: string,
-  mimeType?: string,
+/** Core upload: push a Buffer to Replicate file storage and return its URL. */
+async function uploadBuffer(
+  buf: Buffer,
+  name: string,
+  mimeType: string,
 ): Promise<{ url: string; file_id: string; name: string }> {
+  if (buf.length === 0) {
+    throw new Error("Refusing to upload an empty file.");
+  }
+  if (buf.length > MAX_DOWNLOAD_BYTES) {
+    throw new Error(
+      `File is ${buf.length} bytes, exceeds the ${MAX_DOWNLOAD_BYTES}-byte upload cap.`,
+    );
+  }
   const client = getClient();
-  const buf = await readFile(filePath);
-  const name = basename(filePath);
-  const resolvedMime = mimeType ?? guessUploadMimeType(filePath);
-  const blob = new Blob([buf], { type: resolvedMime });
+  // Wrap in a fresh Uint8Array so the BlobPart is backed by a plain
+  // ArrayBuffer (Buffer's generic ArrayBufferLike isn't a valid BlobPart
+  // under strict types).
+  const blob = new Blob([new Uint8Array(buf)], { type: mimeType });
   // The Replicate SDK exposes client.files.create(blob, { filename }).
   type FilesApi = {
     create: (
@@ -987,8 +997,65 @@ export async function uploadFile(
     blob,
     { filename: name },
   );
-  logger.info("file_uploaded", { name, size: buf.length, mime: resolvedMime });
+  logger.info("file_uploaded", { name, size: buf.length, mime: mimeType });
   return { url: file.urls.get, file_id: file.id, name: file.name };
+}
+
+export async function uploadFile(
+  filePath: string,
+  mimeType?: string,
+): Promise<{ url: string; file_id: string; name: string }> {
+  const buf = await readFile(filePath);
+  const resolvedMime = mimeType ?? guessUploadMimeType(filePath);
+  return uploadBuffer(buf, basename(filePath), resolvedMime);
+}
+
+/** Upload an image/file supplied as base64 (optionally a `data:` URI).
+ *  Lets clients that hold bytes in memory (e.g. a code container that read a
+ *  chat-uploaded image) push them to Replicate without a local file path. */
+export async function uploadBase64(args: {
+  data: string;
+  mimeType?: string;
+  fileName?: string;
+}): Promise<{ url: string; file_id: string; name: string }> {
+  let raw = args.data.trim();
+  let mime = args.mimeType;
+  // Accept a full data URI: data:image/png;base64,XXXX
+  const dataUri = /^data:([^;,]+)?(?:;base64)?,(.*)$/s.exec(raw);
+  if (dataUri) {
+    if (!mime && dataUri[1]) mime = dataUri[1];
+    raw = dataUri[2]!;
+  }
+  raw = raw.replace(/\s/g, "");
+  if (raw.length === 0) {
+    throw new Error("base64 data is empty.");
+  }
+  let buf: Buffer;
+  try {
+    buf = Buffer.from(raw, "base64");
+  } catch {
+    throw new Error("Invalid base64 data.");
+  }
+  if (buf.length === 0) {
+    throw new Error("base64 data decoded to zero bytes — not valid base64.");
+  }
+  const resolvedMime = mime ?? "application/octet-stream";
+  const name = args.fileName ?? `upload-${randomUUID()}${extForMime(resolvedMime)}`;
+  return uploadBuffer(buf, name, resolvedMime);
+}
+
+/** Minimal MIME → extension map for naming base64 uploads. */
+function extForMime(mime: string): string {
+  const map: Record<string, string> = {
+    "image/png": ".png",
+    "image/jpeg": ".jpg",
+    "image/webp": ".webp",
+    "image/gif": ".gif",
+    "video/mp4": ".mp4",
+    "audio/mpeg": ".mp3",
+    "audio/wav": ".wav",
+  };
+  return map[mime] ?? "";
 }
 
 function guessUploadMimeType(filePath: string): string {

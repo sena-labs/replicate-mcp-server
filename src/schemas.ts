@@ -665,14 +665,28 @@ export const UploadFileInputSchema = z
     file_path: z
       .string()
       .min(1)
+      .optional()
       .describe(
-        "Absolute local path of the file to upload to Replicate file storage.",
+        "Absolute local path of the file to upload. Provide either this OR base64_data.",
+      ),
+    base64_data: z
+      .string()
+      .min(1)
+      .optional()
+      .describe(
+        "File contents as base64 (a bare base64 string or a full 'data:<mime>;base64,...' URI). Use this when you have bytes in memory but no local path — e.g. a code container that read a chat-uploaded image. Provide either this OR file_path.",
       ),
     mime_type: z
       .string()
       .optional()
       .describe(
-        "MIME type override (e.g. 'image/png'). Auto-detected from file extension when absent.",
+        "MIME type override (e.g. 'image/png'). Auto-detected from file extension (file_path) or the data URI; defaults to application/octet-stream for raw base64.",
+      ),
+    file_name: z
+      .string()
+      .optional()
+      .describe(
+        "Optional name for a base64 upload. Ignored when file_path is used (the basename is taken from the path).",
       ),
   })
   .strict();

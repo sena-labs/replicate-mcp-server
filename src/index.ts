@@ -112,6 +112,7 @@ import {
   listPredictions,
   cancelPrediction,
   uploadFile,
+  uploadBase64,
   getPoolSize,
   type PredictionResult,
 } from "./replicate.js";
@@ -1491,19 +1492,25 @@ Typical flow:
 server.registerTool(
   "replicate_upload_file",
   {
-    title: "Upload a local file to Replicate",
-    description: `Upload a local file to Replicate's file storage and get back a URL valid for ~24 hours.
+    title: "Upload a file (path or base64) to Replicate",
+    description: `Upload a file to Replicate's file storage and get back a URL valid for ~24 hours. Pass the returned URL as a model input (e.g. image for upscale/inpaint/vision, image_url for video, reference_audio_url for voice clone).
 
-Use this when a model requires a URL input but you only have a local file path. Upload the file first, then pass the returned URL as an input (e.g. image_url for video generation, image for vision/upscale/inpaint).
+Two input modes — provide EXACTLY ONE:
+  - file_path: absolute local path of a file on the machine running the server.
+  - base64_data: the file's bytes as base64 (a bare base64 string OR a full "data:<mime>;base64,..." URI). Use this when you hold bytes in memory but have no local path — e.g. an image a user dropped into the chat that a code container can read and base64-encode. NOTE: an MCP client (Claude Desktop) generally cannot reproduce a large dragged-in image's exact bytes as a tool argument — base64 mode is for callers that genuinely have the bytes (web container, programmatic clients).
 
 Args:
-  - file_path (string): Absolute local path of the file to upload.
-  - mime_type (string, optional): MIME type override. Auto-detected from extension when absent (png→image/png, mp4→video/mp4, etc.).
+  - file_path (string, optional): Absolute local path. Provide this OR base64_data.
+  - base64_data (string, optional): base64 contents or data: URI. Provide this OR file_path.
+  - mime_type (string, optional): MIME override (e.g. 'image/png'). Auto-detected from the path extension or a data: URI; defaults to application/octet-stream for raw base64.
+  - file_name (string, optional): Name for a base64 upload.
 
 Returns structuredContent: { url, file_id, name }
   - url: Replicate-hosted URL (~24h expiry) — pass this as a model input.
-  - file_id: Replicate file object ID.
-  - name: Original filename.`,
+
+Examples:
+  - file_path="C:/Users/me/photo.png"
+  - base64_data="data:image/png;base64,iVBORw0KG...", → uploads, returns URL`,
     inputSchema: UploadFileInputSchema.shape,
     annotations: {
       readOnlyHint: false,
@@ -1514,7 +1521,20 @@ Returns structuredContent: { url, file_id, name }
   },
   async (params: UploadFileInput) => {
     try {
-      const result = await uploadFile(params.file_path, params.mime_type);
+      if (
+        (params.file_path == null) === (params.base64_data == null)
+      ) {
+        throw new Error(
+          "Provide exactly one of file_path or base64_data.",
+        );
+      }
+      const result = params.base64_data
+        ? await uploadBase64({
+            data: params.base64_data,
+            mimeType: params.mime_type,
+            fileName: params.file_name,
+          })
+        : await uploadFile(params.file_path!, params.mime_type);
       return {
         content: [
           {
@@ -1527,7 +1547,7 @@ Returns structuredContent: { url, file_id, name }
     } catch (err) {
       return formatError(
         err,
-        "Ensure the file_path is absolute and the file exists and is readable.",
+        "Provide exactly one of file_path (absolute, readable) or base64_data (valid base64 / data: URI).",
       );
     }
   },
