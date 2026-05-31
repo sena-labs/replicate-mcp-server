@@ -71,10 +71,12 @@ import {
   BatchStatusInputSchema,
   PipelineStartInputSchema,
   PipelineStatusInputSchema,
+  RecommendModelInputSchema,
   type BatchStartInput,
   type BatchStatusInput,
   type PipelineStartInput,
   type PipelineStatusInput,
+  type RecommendModelInput,
   type RefreshModelsInput,
   type GenerateImageInput,
   type GenerateVideoInput,
@@ -116,6 +118,7 @@ import { webhookEnabled } from "./webhook.js";
 import { logger } from "./logger.js";
 import { createBatchJob, getBatchJob, startGC } from "./batch.js";
 import { createPipeline, getPipeline, startPipelineGC } from "./pipeline.js";
+import { recommendModels } from "./router.js";
 
 /* ---------- Server setup ---------- */
 
@@ -1517,6 +1520,78 @@ Returns structuredContent: { url, file_id, name }
         err,
         "Ensure the file_path is absolute and the file exists and is readable.",
       );
+    }
+  },
+);
+
+/* ---------- Tool: recommend_model ---------- */
+
+server.registerTool(
+  "replicate_recommend_model",
+  {
+    title: "Recommend the Best Model for a Task",
+    description: `Rank the curated models in a category by a priority (speed, cost, quality, or balanced) and return recommendations with cost estimates and reasoning. This does NOT run anything — it advises which model to use.
+
+Workflow: call this to pick a model, then call the matching generate tool (e.g. replicate_generate_image) with model set to the recommended key.
+
+Args:
+  - category (required): One of image, video, audio, tts, llm, vision, upscale, bg, stt, inpaint, segment, embed, voiceclone, threed, lipsync.
+  - priority (default "balanced"): "speed" (fastest), "cost" (cheapest), "quality" (best), or "balanced" (weighted).
+  - task_description (optional): Free text. Keyword hints like "quick draft" or "professional logo" nudge balanced ranking.
+  - max_cost_usd (optional): Exclude models estimated above this cost.
+  - duration_seconds (optional, 1–600): For per-second-priced categories (video, audio), used in cost estimation.
+
+Returns structuredContent:
+  {
+    category, priority,
+    recommendations: [{ key, model_id, speed, est_cost_usd, score, reason }],  // top 5
+    count
+  }
+
+Examples:
+  - category="image", priority="speed" → flux-schnell first
+  - category="image", priority="quality" → highest-fidelity model first
+  - category="video", priority="cost", duration_seconds=5 → cheapest per-5s clip`,
+    inputSchema: RecommendModelInputSchema.shape,
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+  },
+  async (params: RecommendModelInput): Promise<ToolResponse> => {
+    try {
+      const recommendations = recommendModels({
+        category: params.category,
+        priority: params.priority ?? "balanced",
+        taskDescription: params.task_description,
+        maxCostUsd: params.max_cost_usd,
+        durationSeconds: params.duration_seconds,
+      });
+
+      const summary =
+        recommendations.length === 0
+          ? `No models found for category "${params.category}".`
+          : `Top ${recommendations.length} ${params.category} models for priority "${params.priority ?? "balanced"}":\n\n` +
+            recommendations
+              .map(
+                (r, i) =>
+                  `${i + 1}. ${r.key} (${r.model_id})\n   ${r.reason} · score ${r.score}`,
+              )
+              .join("\n");
+
+      return {
+        content: [{ type: "text", text: truncate(summary) }],
+        structuredContent: {
+          category: params.category,
+          priority: params.priority ?? "balanced",
+          recommendations,
+          count: recommendations.length,
+        },
+      };
+    } catch (err) {
+      return formatError(err);
     }
   },
 );
