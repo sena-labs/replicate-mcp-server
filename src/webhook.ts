@@ -36,6 +36,8 @@ interface PendingWebhook {
 const pending = new Map<string, PendingWebhook>();
 let publicBase: string | null = null;
 let started = false;
+let httpServer: ReturnType<typeof createServer> | null = null;
+let gcTimer: ReturnType<typeof setInterval> | null = null;
 
 /** Returns true if webhook mode is enabled — caller should request a
  *  callback URL instead of polling. */
@@ -60,6 +62,7 @@ export async function startWebhookReceiver(
       resolve();
     });
   });
+  httpServer = http;
   started = true;
   logger.info("webhook_receiver_listening", {
     host,
@@ -73,7 +76,7 @@ export async function startWebhookReceiver(
   // Garbage-collect stuck pending entries every minute. Stale entries
   // accumulate if predictions never complete and the awaiting tool call
   // already timed out on the MCP side.
-  setInterval(() => {
+  gcTimer = setInterval(() => {
     const now = Date.now();
     for (const [id, p] of pending) {
       if (p.expiresAt <= now) {
@@ -81,7 +84,24 @@ export async function startWebhookReceiver(
         p.reject(new Error(`webhook timeout for ${id}`));
       }
     }
-  }, 60_000).unref();
+  }, 60_000);
+  gcTimer.unref();
+}
+
+/** Stop the receiver and release its resources. Used for graceful shutdown
+ *  and to let tests close the listener so the process can exit. Idempotent. */
+export async function stopWebhookReceiver(): Promise<void> {
+  if (gcTimer) {
+    clearInterval(gcTimer);
+    gcTimer = null;
+  }
+  const server = httpServer;
+  httpServer = null;
+  started = false;
+  publicBase = null;
+  if (server) {
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+  }
 }
 
 /** Build the callback URL Replicate should POST to when a prediction completes.
