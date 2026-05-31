@@ -850,6 +850,58 @@ export const PipelineStatusInputSchema = z
   })
   .strict();
 
+/* ---------- Smart routing / recommendation ---------- */
+
+export const RecommendModelInputSchema = z
+  .object({
+    category: z
+      .enum([
+        "image",
+        "video",
+        "audio",
+        "tts",
+        "llm",
+        "vision",
+        "upscale",
+        "bg",
+        "stt",
+        "inpaint",
+        "segment",
+        "embed",
+        "voiceclone",
+        "threed",
+        "lipsync",
+      ])
+      .describe("Which model category to recommend within."),
+    priority: z
+      .enum(["speed", "cost", "quality", "balanced"])
+      .default("balanced")
+      .describe(
+        "Optimization target. speed=fastest, cost=cheapest, quality=best, balanced=weighted blend. Default: balanced.",
+      ),
+    task_description: z
+      .string()
+      .max(500)
+      .optional()
+      .describe(
+        "Optional task description. Keyword hints (e.g. 'quick draft' or 'professional logo') nudge balanced-mode ranking.",
+      ),
+    max_cost_usd: z
+      .number()
+      .gt(0)
+      .optional()
+      .describe("Optional cap — exclude models whose estimated cost exceeds this."),
+    duration_seconds: z
+      .number()
+      .min(1)
+      .max(600)
+      .optional()
+      .describe(
+        "For per-second-priced categories (video, audio), the expected duration used in cost estimation.",
+      ),
+  })
+  .strict();
+
 /* ---------- Inferred types ---------- */
 
 export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
@@ -880,3 +932,4 @@ export type BatchStartInput = z.infer<typeof BatchStartInputSchema>;
 export type BatchStatusInput = z.infer<typeof BatchStatusInputSchema>;
 export type PipelineStartInput = z.infer<typeof PipelineStartInputSchema>;
 export type PipelineStatusInput = z.infer<typeof PipelineStatusInputSchema>;
+export type RecommendModelInput = z.infer<typeof RecommendModelInputSchema>;
