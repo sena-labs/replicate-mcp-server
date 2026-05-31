@@ -65,6 +65,12 @@ export const EXTRA_INPUT_DENYLIST: ReadonlySet<string> = new Set([
  *  drawn from a random hex source. */
 export const MIN_HTTP_API_KEY_LENGTH = 16;
 
+/** Hard cap on a webhook POST body. Replicate prediction payloads are small
+ *  JSON (well under 1 MB); anything larger is rejected with 413 so an
+ *  authenticated-but-malicious caller can't exhaust memory via an unbounded
+ *  body read. */
+export const MAX_WEBHOOK_BODY_BYTES = 1 * 1024 * 1024; // 1 MB
+
 /** Optional per-prediction spend cap (USD). When > 0 the server estimates
  *  cost before launching a prediction and aborts if it would exceed the cap.
  *  Set via REPLICATE_MAX_COST_USD environment variable. 0 = disabled. */

@@ -24,6 +24,7 @@
 import { createServer, IncomingMessage, ServerResponse } from "node:http";
 import { randomBytes } from "node:crypto";
 import { logger } from "./logger.js";
+import { MAX_WEBHOOK_BODY_BYTES } from "./constants.js";
 
 interface PendingWebhook {
   token: string;
@@ -166,10 +167,25 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
     return;
   }
 
-  // Read body, parse JSON, resolve promise.
+  // Read body (size-capped), parse JSON, resolve promise.
   const chunks: Buffer[] = [];
+  let total = 0;
   try {
-    for await (const c of req) chunks.push(c as Buffer);
+    for await (const c of req) {
+      const buf = c as Buffer;
+      total += buf.length;
+      if (total > MAX_WEBHOOK_BODY_BYTES) {
+        logger.warn("webhook_body_too_large", {
+          prediction_id: predictionId,
+          limit_bytes: MAX_WEBHOOK_BODY_BYTES,
+        });
+        res.statusCode = 413;
+        res.end();
+        req.destroy();
+        return; // leave entry pending — a malformed oversized POST isn't a result
+      }
+      chunks.push(buf);
+    }
   } catch (err) {
     res.statusCode = 400;
     res.end();
