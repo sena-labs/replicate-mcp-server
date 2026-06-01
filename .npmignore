@@ -1,11 +1,9 @@
-# Source — only ship compiled dist/
+# Source — only ship compiled dist/ (package.json "files" is the source of
+# truth; this is a belt-and-braces fallback).
 src/
 test/
-scripts/
-mcpo.log
-mcpo.err
-mcpo-response.json
-ruvector.db
+docs/
+.github/
 
 # Build artefacts not for publish
 *.tsbuildinfo
@@ -17,6 +15,7 @@ tsconfig.json
 .DS_Store
 Thumbs.db
 
-# Logs
+# Logs / runtime junk
 *.log
 *.err
+*.db
