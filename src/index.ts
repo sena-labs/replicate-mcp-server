@@ -374,6 +374,21 @@ function getNumOutputs(params: unknown): number {
   return 1;
 }
 
+/** Extract duration_seconds from params if present (video / audio tools).
+ *  Needed so the pre-flight budget check estimates per-second-priced models
+ *  at their real duration instead of a 1-second floor. */
+function getDurationSeconds(params: unknown): number | undefined {
+  if (
+    typeof params === "object" &&
+    params !== null &&
+    "duration_seconds" in params
+  ) {
+    const n = (params as { duration_seconds?: unknown }).duration_seconds;
+    if (typeof n === "number" && n > 0) return n;
+  }
+  return undefined;
+}
+
 function makeGenerationHandler<TInput extends GenerationHandlerInput>(opts: {
   category: ModelCategory;
   buildPromptInput: (params: TInput) => Record<string, unknown>;
@@ -386,7 +401,7 @@ function makeGenerationHandler<TInput extends GenerationHandlerInput>(opts: {
       const modelId = resolveModel(opts.category, modelKey);
       // Pre-flight cost check — throws if estimated cost > configured cap.
       try {
-        checkBudget(modelId, getNumOutputs(params));
+        checkBudget(modelId, getNumOutputs(params), getDurationSeconds(params));
       } catch (budgetErr) {
         return formatError(budgetErr);
       }
@@ -2016,17 +2031,31 @@ Examples:
       }> = [];
       let alreadyCurated = 0;
 
-      for (const cat of targetCategories) {
-        const keyword = REFRESH_CATEGORY_KEYWORDS[cat];
-        if (!keyword) continue;
+      // Fetch phase — run the per-category catalog searches in parallel
+      // (bounded) instead of 15 sequential round-trips. Errors per category
+      // degrade gracefully to null (skipped below).
+      type SearchModels = Awaited<ReturnType<typeof searchModels>>;
+      const fetched = new Map<string, SearchModels | null>();
+      const cats = targetCategories.filter((c) => REFRESH_CATEGORY_KEYWORDS[c]);
+      const FETCH_CONCURRENCY = 5;
+      for (let i = 0; i < cats.length; i += FETCH_CONCURRENCY) {
+        const slice = cats.slice(i, i + FETCH_CONCURRENCY);
+        const settled = await Promise.all(
+          slice.map(async (cat) => {
+            try {
+              return [cat, await searchModels(REFRESH_CATEGORY_KEYWORDS[cat]!)] as const;
+            } catch {
+              return [cat, null] as const;
+            }
+          }),
+        );
+        for (const [cat, models] of settled) fetched.set(cat, models);
+      }
 
-        let models: Awaited<ReturnType<typeof searchModels>>;
-        try {
-          models = await searchModels(keyword);
-        } catch {
-          // Skip category when Replicate API is unreachable — graceful degradation.
-          continue;
-        }
+      // Diff phase — sequential over the requested order for deterministic output.
+      for (const cat of targetCategories) {
+        const models = fetched.get(cat);
+        if (!models) continue;
 
         let added = 0;
         for (const m of models) {

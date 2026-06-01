@@ -1020,11 +1020,24 @@ export async function uploadBase64(args: {
 }): Promise<{ url: string; file_id: string; name: string }> {
   let raw = args.data.trim();
   let mime = args.mimeType;
-  // Accept a full data URI: data:image/png;base64,XXXX
-  const dataUri = /^data:([^;,]+)?(?:;base64)?,(.*)$/s.exec(raw);
-  if (dataUri) {
-    if (!mime && dataUri[1]) mime = dataUri[1];
-    raw = dataUri[2]!;
+  // Accept a full data URI of the form data:<mediatype>;base64,<payload>.
+  // <mediatype> may carry parameters (e.g. image/png;charset=binary;base64),
+  // so split on the FIRST comma rather than assuming a fixed prefix shape.
+  if (raw.startsWith("data:")) {
+    const comma = raw.indexOf(",");
+    if (comma === -1) {
+      throw new Error("Malformed data URI: missing comma before the payload.");
+    }
+    const mediatype = raw.slice(5, comma); // between "data:" and ","
+    if (!/;base64/i.test(mediatype)) {
+      throw new Error(
+        "Only base64 data URIs are supported (data:<mime>;base64,...).",
+      );
+    }
+    // MIME is the part before the first ';' (parameters stripped).
+    const mimePart = mediatype.split(";")[0]!.trim();
+    if (!mime && mimePart) mime = mimePart;
+    raw = raw.slice(comma + 1);
   }
   raw = raw.replace(/\s/g, "");
   if (raw.length === 0) {
