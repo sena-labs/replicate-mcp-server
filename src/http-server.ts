@@ -27,7 +27,9 @@ export interface HttpServerOptions {
   statusCallback?: () => Record<string, unknown>;
 }
 
-export async function startHttpTransport(opts: HttpServerOptions): Promise<void> {
+export async function startHttpTransport(
+  opts: HttpServerOptions,
+): Promise<import("node:http").Server> {
   const transports = new Map<string, StreamableHTTPServerTransport>();
 
   const http = createServer(async (req, res) => {
@@ -101,6 +103,8 @@ export async function startHttpTransport(opts: HttpServerOptions): Promise<void>
     `replicate-mcp-server HTTP transport on http://${opts.host}:${opts.port}/mcp ` +
       (opts.apiKey ? "(Bearer auth enabled)" : "(UNAUTHENTICATED — bind to localhost or put behind a reverse proxy)"),
   );
+  // Returned so callers (and tests) can close the listener for clean shutdown.
+  return http;
 }
 
 function authorise(req: IncomingMessage, apiKey?: string): boolean {
