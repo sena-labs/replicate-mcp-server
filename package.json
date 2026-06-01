@@ -1,6 +1,6 @@
 {
   "name": "replicate-mcp-server",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "MCP server giving Claude native access to Replicate's full catalog: image, video, audio, music, speech, LLM, vision, upscale, inpaint, segment, transcription, embeddings — anything Replicate hosts. Stdio + HTTP/SSE transport, multi-token pool, rate-limit aware, cost estimator.",
   "type": "module",
   "main": "dist/index.js",

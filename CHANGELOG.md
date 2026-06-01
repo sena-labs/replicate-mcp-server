@@ -3,6 +3,41 @@
 All notable changes to `replicate-mcp-server`. Format roughly follows
 [Keep a Changelog](https://keepachangelog.com/) with [Semantic Versioning](https://semver.org/).
 
+## [3.1.0] — 2026-06-02
+
+### Added — new tools (19 → 29)
+
+- **Voice cloning** — `replicate_clone_voice` (XTTS v2, OpenVoice v2).
+- **3D generation** — `replicate_generate_3d` (Hunyuan 3D, Rodin, TripoSR).
+- **Lipsync / talking avatar** — `replicate_lipsync` (P-Video Avatar, SadTalker).
+- **Async batch jobs** — `replicate_batch_start` / `replicate_batch_status`: run up to 50 predictions concurrently as a background job with TTL-bounded in-memory state.
+- **DAG pipelines** — `replicate_pipeline_start` / `replicate_pipeline_status`: chain predictions, wiring step outputs into downstream inputs via `"$stepId.urls[0]"` template references; independent steps run in parallel (topological scheduling, transitive-failure skip).
+- **Smart routing** — `replicate_recommend_model`: rank curated models in a category by speed / cost / quality / balanced priority with cost estimates.
+- **Model discovery** — `replicate_refresh_models`: surface popular Replicate models not yet in the curated registry (parallel category search).
+- **File upload** — `replicate_upload_file` now accepts `base64_data` (bare base64 or a `data:` URI) in addition to `file_path`, enabling chat-uploaded image editing from a code container.
+
+### Added — registry & infrastructure
+
+- Curated registry expanded to **63 models** across 15 categories (image, video, audio, tts, llm, vision, upscale, bg, stt, inpaint, segment, embed, voiceclone, threed, lipsync).
+- GitHub Actions CI (Node 20 + 22) with a production-dependency security-audit job.
+- `MIT` LICENSE file.
+
+### Fixed
+
+- Timed-out (`pending`) and `canceled` predictions are no longer miscounted as succeeded in batch/pipeline workers (they failed silently and, in pipelines, cascaded empty outputs downstream).
+- Cost table: corrected the `wan-2.2` owner mismatch (budget cap was silently bypassed), replaced the removed `mistral-large` entry with `mistral-7b`, and surfaced a warning when a budget cap is set for an unpriced model.
+- `replicate_recommend_model` speed tiebreak no longer produces `NaN` when all models in a category have unknown pricing.
+- Webhook receiver caps the POST body at 1 MB (413) to prevent memory exhaustion.
+- Per-model field maps resolve full `owner/name` ids back to the curated key, so passing a full id no longer sends the wrong input field.
+- `replicate_upload_file` base64 parsing handles data URIs with mediatype parameters (e.g. `;charset=`).
+- Pre-flight budget check passes `duration_seconds`, so per-second-priced models (video/audio) are estimated at their real duration.
+- Inline image preview caps lowered to stay under Claude Desktop's 1 MB tool-result limit.
+
+### Changed — internals
+
+- `src/index.ts` refactored from a 2240-line monolith into focused modules: `responses.ts`, `handler-factory.ts`, `field-maps.ts`, and `src/tools/{generation,media,management,orchestration,account}.ts`. `index.ts` is now a ~200-line bootstrap. No behaviour change.
+- Test suite grown to 239 unit tests + a stdio smoke test, including the async batch/pipeline workers, webhook receiver, and HTTP transport.
+
 ## [3.0.0] — 2026-05-19
 
 ### Added — platform features

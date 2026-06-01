@@ -1,4 +1,4 @@
-procedio# Ecosystem Sub-Project Design
+# Ecosystem Sub-Project Design
 **Date:** 2026-05-30  
 **Project:** replicate-mcp-server  
 **Scope:** CI/CD pipeline + `replicate_refresh_models` MCP tool  
