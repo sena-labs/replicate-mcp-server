@@ -61,6 +61,7 @@ export const REPLICATE_ALLOWED_HOSTS: ReadonlySet<string> = new Set([
  *  at attacker-controlled URLs through an MCP tool call. */
 export const EXTRA_INPUT_DENYLIST: ReadonlySet<string> = new Set([
   "webhook",
+  "webhook_url",
   "webhook_completed",
   "webhook_events_filter",
   "webhook_filter",

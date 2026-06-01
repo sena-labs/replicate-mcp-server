@@ -21,6 +21,10 @@ COPY --from=build /app/dist ./dist
 # Default port for HTTP transport. Stdio mode ignores this.
 EXPOSE 8088
 
+# Drop privileges — run as the unprivileged `node` user baked into the
+# official image rather than root.
+USER node
+
 # Default to HTTP transport in container deployments — stdio is meaningless
 # inside Docker since there's no TTY pipe to the parent. Override the CMD
 # to run in stdio mode if needed (e.g. via `docker run -it`).

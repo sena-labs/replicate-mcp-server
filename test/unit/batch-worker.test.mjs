@@ -146,4 +146,6 @@ test("batch worker — concurrency cap respected (never more than N running)", a
   const done = await waitDone(job.job_id);
   assert.equal(done.succeeded, 6);
   assert.ok(maxActive <= 2, `maxActive=${maxActive} exceeded concurrency 2`);
+  // Lower bound too: prove work actually ran in parallel, not sequentially.
+  assert.ok(maxActive > 1, `maxActive=${maxActive} — work ran sequentially, concurrency not active`);
 });

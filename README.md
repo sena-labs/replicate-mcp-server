@@ -28,7 +28,7 @@ Once installed in Claude Desktop, you can simply ask:
 | `replicate_generate_video` | Text (or image) → video. Curated: Kling Pro, Minimax, Hunyuan, Luma Ray, Wan 2.2, Grok Video, Seedance. |
 | `replicate_generate_audio` | Text → music / songs. Curated: MusicGen, ACE-Step (full songs with lyrics), Riffusion, MiniMax Music. |
 | `replicate_generate_speech` | Text → speech (TTS). Curated: Kokoro, Minimax Speech, Chatterbox, Gemini TTS, Grok TTS. |
-| `replicate_chat` | Text → text via LLM. Curated: Llama 3.1 405B / 70B / 8B, Mistral 7B, Mixtral 8x7B, DeepSeek-R1. |
+| `replicate_chat` | Text → text via LLM. Curated: Llama 3.1 405B, Llama 3 70B / 8B, Mistral 7B, Mixtral 8x7B, DeepSeek-R1. |
 | `replicate_vision` | Image → text. Curated: LLaVA 13B / 1.6 34B, BLIP-2, Qwen2-VL. |
 | `replicate_upscale_image` | Image → higher-res image. Curated: Real-ESRGAN, Clarity Upscaler, Clarity Pro, SwinIR, GFPGAN. |
 | `replicate_remove_background` | Image → transparent PNG. Curated: rembg, BiRefNet, BRIA RMBG. |
