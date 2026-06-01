@@ -27,3 +27,22 @@ jobs:
 
       - name: Build and test
         run: npm test
+
+  security:
+    name: Security audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Fail only on high/critical advisories in shipped (production) deps.
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
