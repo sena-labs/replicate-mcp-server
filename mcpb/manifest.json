@@ -1,0 +1,48 @@
+{
+  "$schema": "https://raw.githubusercontent.com/anthropics/mcpb/main/schemas/mcpb-manifest-v0.4.schema.json",
+  "manifest_version": "0.4",
+  "name": "replicate-mcp-server",
+  "display_name": "Replicate",
+  "version": "3.1.0",
+  "description": "Universal MCP server for the full Replicate catalog: image, video, audio, music, speech (TTS+STT), LLMs, vision, upscale, inpaint, segment, embeddings, voice cloning, 3D, lipsync, plus async batch + DAG pipeline orchestration and a model recommender. 29 tools, 63 curated models.",
+  "author": { "name": "Ivan Sena (sena-labs)" },
+  "homepage": "https://github.com/sena-labs/replicate-mcp-server",
+  "documentation": "https://github.com/sena-labs/replicate-mcp-server#readme",
+  "license": "MIT",
+  "keywords": [
+    "replicate",
+    "image-generation",
+    "video-generation",
+    "tts",
+    "stt",
+    "llm",
+    "vision",
+    "voice-cloning",
+    "3d-generation",
+    "lipsync"
+  ],
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/index.js"],
+      "env": {
+        "REPLICATE_API_TOKEN": "${user_config.replicate_api_token}"
+      }
+    }
+  },
+  "user_config": {
+    "replicate_api_token": {
+      "type": "string",
+      "title": "Replicate API token",
+      "description": "Your Replicate API token (starts with r8_). Get one at https://replicate.com/account/api-tokens. Stored in the OS keychain.",
+      "sensitive": true,
+      "required": true
+    }
+  },
+  "compatibility": {
+    "claude_desktop": ">=0.10.0",
+    "platforms": ["darwin", "win32", "linux"]
+  }
+}

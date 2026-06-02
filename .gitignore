@@ -15,3 +15,7 @@ mcpo.err
 mcpo.log
 test-sdk.mjs
 ruvector.db
+
+# MCPB build output (manifest + build script are tracked; artifacts are not)
+mcpb/build/
+mcpb/*.mcpb
