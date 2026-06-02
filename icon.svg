@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Replicate MCP Server">
+  <defs>
+    <linearGradient id="r" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6366F1"/>
+      <stop offset="0.55" stop-color="#A855F7"/>
+      <stop offset="1" stop-color="#EC4899"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#0B1020"/>
+  <text x="256" y="262" text-anchor="middle" dominant-baseline="central"
+        font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+        font-weight="800" font-size="320" fill="url(#r)">R</text>
+</svg>

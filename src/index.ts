@@ -38,6 +38,7 @@ import { registerMediaTools } from "./tools/media.js";
 import { registerManagementTools } from "./tools/management.js";
 import { registerOrchestrationTools } from "./tools/orchestration.js";
 import { registerAccountTools } from "./tools/account.js";
+import { registerPrompts } from "./prompts.js";
 
 /* ---------- Server setup ---------- */
 
@@ -65,6 +66,10 @@ registerOrchestrationTools(server);
 /* ---------- Tools: list / cancel / estimate / refresh ---------- */
 
 registerAccountTools(server);
+
+/* ---------- Workflow prompts (multi-tool flows) ---------- */
+
+registerPrompts(server);
 
 /* ---------- Run ---------- */
 
