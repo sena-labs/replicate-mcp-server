@@ -12,9 +12,8 @@ const API_KEY = "test-api-key-1234567"; // ≥ 16 chars
 let httpServer;
 
 before(async () => {
-  const mcp = new McpServer({ name: "test", version: "0.0.0" });
   httpServer = await startHttpTransport({
-    server: mcp,
+    createServer: () => new McpServer({ name: "test", version: "0.0.0" }),
     port: PORT,
     host: HOST,
     apiKey: API_KEY,
@@ -84,4 +83,33 @@ test("POST /mcp with correct Bearer → passes auth (not 401)", async () => {
   // the point is the request got PAST the auth gate.
   assert.notEqual(res.status, 401);
   assert.notEqual(res.status, 404);
+});
+
+test("multiple sessions each initialize cleanly (per-session McpServer)", async () => {
+  // Regression: one shared McpServer reused across sessions threw "Already
+  // connected to a transport" → 500 on the 2nd session. Each session must get
+  // its own server instance and initialize with 200.
+  const initialize = (id) =>
+    fetch(`${BASE}/mcp`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        accept: "application/json, text/event-stream",
+        authorization: `Bearer ${API_KEY}`,
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id,
+        method: "initialize",
+        params: {
+          protocolVersion: "2024-11-05",
+          capabilities: {},
+          clientInfo: { name: "t", version: "0" },
+        },
+      }),
+    });
+  const a = await initialize(1);
+  const b = await initialize(2);
+  assert.equal(a.status, 200);
+  assert.equal(b.status, 200);
 });

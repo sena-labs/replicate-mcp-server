@@ -19,7 +19,9 @@ import { logger } from "./logger.js";
 import { requestContext, type RequestContext } from "./request-context.js";
 
 export interface HttpServerOptions {
-  server: McpServer;
+  /** Factory that builds a fresh McpServer. Called once per session — a single
+   *  McpServer can only be connected to one transport at a time. */
+  createServer: () => McpServer;
   port: number;
   host: string;
   apiKey?: string;
@@ -59,15 +61,21 @@ export async function startHttpTransport(
       let transport = sessionId ? transports.get(sessionId) : undefined;
 
       if (!transport) {
-        // New session — generate an id and stand up a fresh transport.
+        // New session — generate an id, build a dedicated server, and stand up
+        // a fresh transport. Each session gets its OWN McpServer because one
+        // server can only be connected to a single transport at a time.
         const newId = sessionId ?? randomUUID();
         transport = new StreamableHTTPServerTransport({
           sessionIdGenerator: () => newId,
         });
-        // Remove from map when the session closes so the map doesn't grow
-        // without bound in long-running servers.
-        transport.onclose = () => transports.delete(newId);
-        await opts.server.connect(transport);
+        const sessionServer = opts.createServer();
+        // Remove from map + close the per-session server when the session ends,
+        // so neither the map nor server instances grow without bound.
+        transport.onclose = () => {
+          transports.delete(newId);
+          void sessionServer.close();
+        };
+        await sessionServer.connect(transport);
         transports.set(newId, transport);
         // The SDK transport sets the Mcp-Session-Id response header on the
         // initialize response automatically; subsequent calls reuse it.

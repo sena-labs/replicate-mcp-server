@@ -40,36 +40,28 @@ import { registerOrchestrationTools } from "./tools/orchestration.js";
 import { registerAccountTools } from "./tools/account.js";
 import { registerPrompts } from "./prompts.js";
 
-/* ---------- Server setup ---------- */
-
-const server = new McpServer({
-  name: SERVER_NAME,
-  version: SERVER_VERSION,
-});
-
-/* ---------- Tools: curated single-prediction generation ---------- */
-
-registerGenerationTools(server);
-
-/* ---------- Tools: voice clone / 3D / lipsync ---------- */
-
-registerMediaTools(server);
-
-/* ---------- Tools: run_model / search / schema / get_prediction / upload / recommend ---------- */
-
-registerManagementTools(server);
-
-/* ---------- Tools: batch + pipeline orchestration ---------- */
-
-registerOrchestrationTools(server);
-
-/* ---------- Tools: list / cancel / estimate / refresh ---------- */
-
-registerAccountTools(server);
-
-/* ---------- Workflow prompts (multi-tool flows) ---------- */
-
-registerPrompts(server);
+/* ---------- Server factory ----------
+ *
+ * Builds a fresh McpServer with every tool + prompt registered. The HTTP
+ * transport calls this once PER SESSION — a single McpServer can only be
+ * connected to one transport at a time, so reusing one instance across
+ * StreamableHTTP sessions throws "Already connected to a transport". stdio
+ * uses a single instance. All shared state the tools touch (token pool,
+ * batch/pipeline job maps) lives in module singletons, common to every
+ * instance. */
+function buildServer(): McpServer {
+  const server = new McpServer({
+    name: SERVER_NAME,
+    version: SERVER_VERSION,
+  });
+  registerGenerationTools(server); // curated single-prediction generation
+  registerMediaTools(server); // voice clone / 3D / lipsync
+  registerManagementTools(server); // run_model / search / schema / get_prediction / upload / recommend
+  registerOrchestrationTools(server); // batch + pipeline orchestration
+  registerAccountTools(server); // list / cancel / estimate / refresh
+  registerPrompts(server); // workflow prompts (multi-tool flows)
+  return server;
+}
 
 /* ---------- Run ---------- */
 
@@ -151,7 +143,7 @@ async function main(): Promise<void> {
       );
     }
     await startHttpTransport({
-      server,
+      createServer: buildServer,
       port: args.httpPort,
       host: args.httpHost,
       apiKey: rawApiKey,
@@ -175,6 +167,7 @@ async function main(): Promise<void> {
   }
 
   const transport = new StdioServerTransport();
+  const server = buildServer();
   await server.connect(transport);
   // Boot banner stays human-readable on stderr alongside structured logs.
   console.error(
