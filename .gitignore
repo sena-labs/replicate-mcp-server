@@ -23,6 +23,11 @@ mcpb/*.mcpb
 # Image-generation exploration (chosen assets/icon.png + assets/banner.png tracked)
 assets/candidates/
 assets/banner-candidates/
+# Compositor build artifact (regenerable via scripts/compose-banner.mjs; banner.png is the shipped copy)
+assets/banner-ad.png
+
+# Playwright MCP session scratch
+.playwright-mcp/
 
 # Deploy secrets (PUBLIC_IP / domain / ACME email live only on the host)
 deploy/.env
