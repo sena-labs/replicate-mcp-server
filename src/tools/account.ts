@@ -43,6 +43,16 @@ import {
   type RefreshModelsInput,
 } from "../schemas.js";
 
+const _ALL_REGISTRIES = [
+  IMAGE_MODELS, VIDEO_MODELS, AUDIO_MUSIC_MODELS, TTS_MODELS,
+  LLM_MODELS, VISION_MODELS, UPSCALE_MODELS, BG_REMOVAL_MODELS,
+  STT_MODELS, INPAINT_MODELS, SEGMENT_MODELS, EMBED_MODELS,
+  VOICE_CLONE_MODELS, THREED_MODELS, LIPSYNC_MODELS,
+];
+const CURATED_MODEL_IDS = new Set(
+  _ALL_REGISTRIES.flatMap((r) => Object.values(r).map((m) => m.id)),
+);
+
 export function registerAccountTools(server: McpServer): void {
 /* ---------- Tool: list_predictions ---------- */
 
@@ -61,7 +71,7 @@ Each PredictionSummary has id, model, status, created_at, completed_at, url.`,
     annotations: {
       readOnlyHint: true,
       destructiveHint: false,
-      idempotentHint: false,
+      idempotentHint: true,
       openWorldHint: true,
     },
   },
@@ -224,16 +234,7 @@ Examples:
       const minRunCount = params.min_run_count ?? 1000;
       const limitPerCategory = params.limit_per_category ?? 5;
 
-      // Build flat set of all curated model IDs for O(1) diff lookup.
-      const allRegistries = [
-        IMAGE_MODELS, VIDEO_MODELS, AUDIO_MUSIC_MODELS, TTS_MODELS,
-        LLM_MODELS, VISION_MODELS, UPSCALE_MODELS, BG_REMOVAL_MODELS,
-        STT_MODELS, INPAINT_MODELS, SEGMENT_MODELS, EMBED_MODELS,
-        VOICE_CLONE_MODELS, THREED_MODELS, LIPSYNC_MODELS,
-      ];
-      const curatedIds = new Set(
-        allRegistries.flatMap((r) => Object.values(r).map((m) => m.id)),
-      );
+      const curatedIds = CURATED_MODEL_IDS;
 
       const suggestions: Array<{
         category: string;

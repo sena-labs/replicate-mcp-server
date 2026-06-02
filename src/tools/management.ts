@@ -37,6 +37,18 @@ import {
   type RecommendModelInput,
 } from "../schemas.js";
 
+/** Reject obviously malformed Replicate model identifiers up-front so the
+ *  caller gets a clear error instead of a downstream 422 from Replicate.
+ *  Module-scoped (not nested) so it can be unit-tested. */
+export function validateModelId(id: string): void {
+  // "owner/name" with optional ":version" — same shape parseOwnerName accepts.
+  if (!/^[^/:\s]+\/[^/:\s]+(:[^/\s]+)?$/.test(id)) {
+    throw new Error(
+      `Invalid model id "${id}". Expected "owner/name" or "owner/name:version_hash". For curated shortcuts use one of the specialised tools (e.g. replicate_chat) instead.`,
+    );
+  }
+}
+
 export function registerManagementTools(server: McpServer): void {
 /* ---------- Tool: run_model (generic) ---------- */
 
@@ -113,16 +125,6 @@ Examples:
   },
 );
 
-/** Reject obviously malformed Replicate model identifiers up-front so the
- *  caller gets a clear error instead of a downstream 422 from Replicate. */
-function validateModelId(id: string): void {
-  // "owner/name" with optional ":version" — same shape parseOwnerName accepts.
-  if (!/^[^/:\s]+\/[^/:\s]+(:[^/\s]+)?$/.test(id)) {
-    throw new Error(
-      `Invalid model id "${id}". Expected "owner/name" or "owner/name:version_hash". For curated shortcuts use one of the specialised tools (e.g. replicate_chat) instead.`,
-    );
-  }
-}
 
 /* ---------- Tool: search_models ---------- */
 

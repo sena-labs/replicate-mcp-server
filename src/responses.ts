@@ -100,7 +100,7 @@ export async function formatPrediction(
     // Visual prediction with an inline image — lead with the image, follow
     // with the embed caption. Full details remain in structuredContent.
     content.push(...images);
-    content.push({ type: "text", text: renderSuccessCaption(result) });
+    content.push({ type: "text", text: truncate(renderSuccessCaption(result)) });
   } else {
     content.push({ type: "text", text: truncate(renderFullSummary(result)) });
   }
@@ -228,6 +228,7 @@ export function formatError(err: unknown, hint?: string): ToolResponse {
   if (hint) message += `\n\nHint: ${hint}`;
   return {
     content: [{ type: "text", text: `Error: ${message}` }],
+    structuredContent: { error: message },
     isError: true,
   };
 }

@@ -12,7 +12,7 @@
  */
 
 import { createServer, IncomingMessage, ServerResponse } from "node:http";
-import { randomUUID } from "node:crypto";
+import { randomUUID, timingSafeEqual } from "node:crypto";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { logger } from "./logger.js";
@@ -112,14 +112,13 @@ function authorise(req: IncomingMessage, apiKey?: string): boolean {
   const header = req.headers["authorization"];
   if (typeof header !== "string") return false;
   const expected = `Bearer ${apiKey}`;
-  // Constant-time-ish comparison: same length, char-by-char OR (avoid
-  // the easy timing leak when the header is much shorter than expected).
-  if (header.length !== expected.length) return false;
-  let diff = 0;
-  for (let i = 0; i < header.length; i++) {
-    diff |= header.charCodeAt(i) ^ expected.charCodeAt(i);
+  const a = Buffer.from(header);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length) {
+    timingSafeEqual(b, b);
+    return false;
   }
-  return diff === 0;
+  return timingSafeEqual(a, b);
 }
 
 function pickSessionId(req: IncomingMessage): string | undefined {
