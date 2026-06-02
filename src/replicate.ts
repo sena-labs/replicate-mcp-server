@@ -30,6 +30,7 @@ import {
 /* ---------- Client ---------- */
 
 import { loadTokenPoolFromEnv, type TokenPool } from "./token-pool.js";
+import { getRequestToken } from "./request-context.js";
 import {
   webhookEnabled,
   buildCallbackUrl,
@@ -39,7 +40,10 @@ import {
 
 let _pool: TokenPool | null = null;
 /** Per-token Replicate client cache so we don't re-instantiate on every
- *  call (saves the SDK setup cost without sharing state between tokens). */
+ *  call (saves the SDK setup cost without sharing state between tokens).
+ *  Capped + FIFO-evicted so a multi-tenant host serving many distinct user
+ *  tokens can't grow this map without bound. */
+const MAX_CACHED_CLIENTS = 256;
 const _clientByToken = new Map<string, Replicate>();
 
 function ensurePool(): NonNullable<typeof _pool> {
@@ -59,15 +63,30 @@ function ensurePool(): NonNullable<typeof _pool> {
 function clientForToken(token: string): Replicate {
   let client = _clientByToken.get(token);
   if (!client) {
+    if (_clientByToken.size >= MAX_CACHED_CLIENTS) {
+      // Evict the oldest entry (Map preserves insertion order).
+      const oldest = _clientByToken.keys().next().value;
+      if (oldest !== undefined) _clientByToken.delete(oldest);
+    }
     client = new Replicate({ auth: token });
     _clientByToken.set(token, client);
   }
   return client;
 }
 
-/** Returns a client + the token it's authenticated with. Picks the next
- *  non-rate-limited token from the pool so callers can mark it on 429. */
+/** Returns a client + the token it's authenticated with.
+ *
+ *  Multi-tenant (hosted): if the current request carries its own Replicate
+ *  token (set by the HTTP layer from the per-user session config), use that —
+ *  the caller pays for their own usage and the env pool is bypassed.
+ *
+ *  Otherwise (stdio / single-account): pick the next non-rate-limited token
+ *  from the env pool so callers can mark it on 429. */
 function getClientAndToken(): { client: Replicate; token: string } {
+  const sessionToken = getRequestToken();
+  if (sessionToken) {
+    return { client: clientForToken(sessionToken), token: sessionToken };
+  }
   const pool = ensurePool();
   const token = pool.nextAvailable();
   return { client: clientForToken(token), token };
@@ -266,7 +285,8 @@ async function createPredictionWithRetry(
   input: Record<string, unknown>,
   webhookUrl?: string,
 ): Promise<{ prediction: Prediction; client: Replicate }> {
-  const maxAttempts = _pool?.size ?? 1;
+  // A per-request session token isn't part of the env pool — don't rotate.
+  const maxAttempts = getRequestToken() ? 1 : (_pool?.size ?? 1);
   let ct = getClientAndToken();
   let lastErr: unknown;
 

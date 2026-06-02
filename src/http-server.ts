@@ -16,6 +16,7 @@ import { randomUUID, timingSafeEqual } from "node:crypto";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { logger } from "./logger.js";
+import { requestContext, type RequestContext } from "./request-context.js";
 
 export interface HttpServerOptions {
   server: McpServer;
@@ -72,7 +73,10 @@ export async function startHttpTransport(
         // initialize response automatically; subsequent calls reuse it.
       }
 
-      await transport.handleRequest(req, res, body);
+      // Multi-tenant: carry the caller's own Replicate token (from the
+      // gateway/Smithery per-user session config) for this request only.
+      const ctx = parseSessionConfig(url);
+      await requestContext.run(ctx, () => transport!.handleRequest(req, res, body));
     } catch (err) {
       logger.error("http_request_failed", {
         message: err instanceof Error ? err.message : String(err),
@@ -126,6 +130,40 @@ function pickSessionId(req: IncomingMessage): string | undefined {
   if (typeof v === "string" && v.length > 0) return v;
   if (Array.isArray(v) && v[0]) return v[0];
   return undefined;
+}
+
+/** Parse the per-user session config a hosting gateway (e.g. Smithery) attaches
+ *  to each request. Smithery delivers config-schema values either as a
+ *  base64-encoded JSON object in the `config` query param, or as individual
+ *  query params keyed by the schema property name. We read `replicate_api_token`
+ *  (and the camelCase variant) from whichever is present. Returns {} for plain
+ *  stdio/local use, so the env token pool is used unchanged. */
+export function parseSessionConfig(url: URL): RequestContext {
+  const q = url.searchParams;
+  const cfgParam = q.get("config");
+  if (cfgParam) {
+    try {
+      const json: unknown = JSON.parse(Buffer.from(cfgParam, "base64").toString("utf8"));
+      const tok = readConfigToken(json);
+      if (tok) return { replicateToken: tok };
+    } catch {
+      // malformed config — fall through to direct params
+    }
+  }
+  const direct =
+    q.get("replicate_api_token") ??
+    q.get("replicateApiToken") ??
+    q.get("config.replicate_api_token") ??
+    undefined;
+  if (direct) return { replicateToken: direct };
+  return {};
+}
+
+function readConfigToken(obj: unknown): string | undefined {
+  if (!obj || typeof obj !== "object") return undefined;
+  const o = obj as Record<string, unknown>;
+  const v = o["replicate_api_token"] ?? o["replicateApiToken"];
+  return typeof v === "string" && v.length > 0 ? v : undefined;
 }
 
 /** 10 MB hard cap — guards against OOM via oversized POST bodies. */
