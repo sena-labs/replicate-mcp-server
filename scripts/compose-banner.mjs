@@ -41,31 +41,31 @@ function roundRectPath(x, y, w, h, r) {
   ctx.closePath();
 }
 
-// Base black; pull the node-graph from the far right toward centre-right and
-// enlarge to fill the height (it stays a backdrop, kept right of the text).
+// Base black; node-graph enlarged and kept in the right ~48% as a backdrop so
+// the (now larger) text owns the left + centre.
 ctx.fillStyle = "#03040a";
 ctx.fillRect(0, 0, W, H);
-ctx.drawImage(banner, 0.55 * W, 0.10 * H, 0.45 * W, 0.80 * H, 0.44 * W, 0, 0.56 * W, H);
+ctx.drawImage(banner, 0.55 * W, 0.10 * H, 0.45 * W, 0.80 * H, 0.52 * W, 0, 0.48 * W, H);
 
 // Scrim over the graphic so the text clearly dominates.
 ctx.fillStyle = "rgba(3,5,12,0.24)";
-ctx.fillRect(0.40 * W, 0, 0.60 * W, H);
+ctx.fillRect(0.50 * W, 0, 0.50 * W, H);
 
-// Left panel darkening so the (large) text owns the left + centre.
-const vg = ctx.createLinearGradient(0, 0, W * 0.56, 0);
+// Left panel darkening so the large text reads on a dark bed across left+centre.
+const vg = ctx.createLinearGradient(0, 0, W * 0.58, 0);
 vg.addColorStop(0, "rgba(2,4,10,0.97)");
-vg.addColorStop(0.66, "rgba(2,4,10,0.6)");
+vg.addColorStop(0.7, "rgba(2,4,10,0.6)");
 vg.addColorStop(1, "rgba(2,4,10,0)");
 ctx.fillStyle = vg;
-ctx.fillRect(0, 0, W * 0.6, H);
+ctx.fillRect(0, 0, W * 0.62, H);
 
 const X = 200;
 
-// --- Logo tile ---
-const ls = 268, lx = X, ly = 222, lr = 58;
+// --- Logo tile (+20%) ---
+const ls = 322, lx = X, ly = 95, lr = 70;
 ctx.save();
 ctx.shadowColor = "rgba(168,85,247,0.55)";
-ctx.shadowBlur = 84;
+ctx.shadowBlur = 96;
 roundRectPath(lx, ly, ls, ls, lr);
 ctx.fillStyle = "#0b1020";
 ctx.fill();
@@ -80,49 +80,49 @@ ctx.strokeStyle = "rgba(255,255,255,0.12)";
 ctx.lineWidth = 2;
 ctx.stroke();
 
-// --- Title (two lines, large = dominant) ---
+// --- Title (two lines, +20% = dominant) ---
 ctx.textBaseline = "alphabetic";
 ctx.save();
 ctx.shadowColor = "rgba(0,0,0,0.6)";
-ctx.shadowBlur = 28;
-ctx.font = `156px "${HEAVY}"`;
+ctx.shadowBlur = 30;
+ctx.font = `187px "${HEAVY}"`;
 ctx.fillStyle = "#FFFFFF";
-ctx.fillText("Replicate", X, 706);
+ctx.fillText("Replicate", X, 676);
 const t2 = "MCP Server";
 const grad = ctx.createLinearGradient(X, 0, X + ctx.measureText(t2).width, 0);
 grad.addColorStop(0, "#7C82F8");
 grad.addColorStop(0.5, "#A855F7");
 grad.addColorStop(1, "#EC4899");
 ctx.fillStyle = grad;
-ctx.fillText(t2, X, 878);
+ctx.fillText(t2, X, 882);
 ctx.restore();
 
-// --- Tagline ---
-ctx.font = `46px "${BODY}"`;
+// --- Tagline (+20%) ---
+ctx.font = `55px "${BODY}"`;
 ctx.fillStyle = "#C8CCDC";
-ctx.fillText("The entire Replicate AI catalog — for any MCP client.", X, 958);
+ctx.fillText("The entire Replicate AI catalog — for any MCP client.", X, 978);
 
-// --- Capability row ---
-ctx.font = `34px "${SEMI}"`;
+// --- Capability row (+20%) ---
+ctx.font = `41px "${SEMI}"`;
 ctx.fillStyle = "#BE92F2";
 try { ctx.letterSpacing = "3px"; } catch {}
-ctx.fillText("IMAGE   ·   VIDEO   ·   AUDIO   ·   3D   ·   VOICE", X, 1028);
+ctx.fillText("IMAGE   ·   VIDEO   ·   AUDIO   ·   3D   ·   VOICE", X, 1062);
 try { ctx.letterSpacing = "0px"; } catch {}
 
-// --- Stats ---
-ctx.font = `30px "${BODY}"`;
+// --- Stats (+20%) ---
+ctx.font = `36px "${BODY}"`;
 ctx.fillStyle = "#8A90A7";
-ctx.fillText("29 tools · run any Replicate model · 60+ curated · open-source", X, 1082);
+ctx.fillText("29 tools · run any Replicate model · 60+ curated · open-source", X, 1127);
 
-// --- Distribution pills ---
+// --- Distribution pills (+20%) ---
 function pill(x, y, label, accent) {
-  ctx.font = `28px "${SEMI}"`;
-  const padX = 28, h = 58;
+  ctx.font = `34px "${SEMI}"`;
+  const padX = 34, h = 70;
   const w = ctx.measureText(label).width + padX * 2;
   if (accent) {
     ctx.save();
     ctx.shadowColor = "rgba(168,85,247,0.5)";
-    ctx.shadowBlur = 26;
+    ctx.shadowBlur = 30;
     roundRectPath(x, y, w, h, h / 2);
     const g = ctx.createLinearGradient(x, 0, x + w, 0);
     g.addColorStop(0, "#6366F1");
@@ -144,10 +144,10 @@ function pill(x, y, label, accent) {
   ctx.textBaseline = "middle";
   ctx.fillText(label, x + padX, y + h / 2 + 2);
   ctx.textBaseline = "alphabetic";
-  return x + w + 18;
+  return x + w + 22;
 }
 let px = X;
-const py = 1126;
+const py = 1180;
 px = pill(px, py, "Available on Smithery", true);
 px = pill(px, py, "npm  replicate-mcp-server", false);
 px = pill(px, py, "GitHub", false);
