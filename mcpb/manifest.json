@@ -37,9 +37,9 @@
     "replicate_api_token": {
       "type": "string",
       "title": "Replicate API token",
-      "description": "Your Replicate API token (starts with r8_). Get one at https://replicate.com/account/api-tokens. Stored in the OS keychain.",
+      "description": "Your Replicate API token (starts with r8_). Get one at https://replicate.com/account/api-tokens. Stored in the OS keychain. Required for any generation call — the server starts without it (so its tools can be listed) but every model call needs it.",
       "sensitive": true,
-      "required": true
+      "required": false
     }
   },
   "compatibility": {
