@@ -22,3 +22,6 @@ mcpb/*.mcpb
 
 # Icon-generation exploration (the chosen assets/icon.png is tracked)
 assets/candidates/
+
+# Deploy secrets (PUBLIC_IP / domain / ACME email live only on the host)
+deploy/.env

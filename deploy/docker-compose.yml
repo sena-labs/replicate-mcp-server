@@ -1,0 +1,56 @@
+# Isolated public deployment for replicate-mcp.sena-labs.dev.
+#
+# Two containers on the existing `proxy` network:
+#   - replicate-mcp:  the MCP server (HTTP transport, multi-tenant — each user
+#                     brings their own Replicate token; NO server-wide token).
+#   - replicate-mcp-caddy: a DEDICATED Caddy reverse proxy that binds ONLY the
+#                     public IP (not 0.0.0.0), serving just this one hostname
+#                     with automatic Let's Encrypt. The host's existing
+#                     nginx-proxy-manager (bound to the Tailscale IP) is left
+#                     completely untouched and stays private.
+#
+# Config comes from deploy/.env (gitignored): PUBLIC_IP, MCP_DOMAIN, ACME_EMAIL.
+name: replicate-mcp
+
+services:
+  replicate-mcp:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    image: replicate-mcp:latest
+    container_name: replicate-mcp
+    restart: unless-stopped
+    networks: [proxy]
+    expose:
+      - "8088"
+    # Intentionally NO REPLICATE_API_TOKEN — multi-tenant. Tool calls without a
+    # per-user token fail with a clear error; tools/prompts still list for scans.
+    environment:
+      LOG_LEVEL: "info"
+
+  replicate-mcp-caddy:
+    image: caddy:2-alpine
+    container_name: replicate-mcp-caddy
+    restart: unless-stopped
+    depends_on: [replicate-mcp]
+    networks: [proxy]
+    # Bind the PUBLIC IP only — avoids colliding with nginx-proxy-manager, which
+    # publishes 80/443 on the Tailscale IP.
+    ports:
+      - "${PUBLIC_IP}:80:80"
+      - "${PUBLIC_IP}:443:443"
+    environment:
+      MCP_DOMAIN: "${MCP_DOMAIN}"
+      ACME_EMAIL: "${ACME_EMAIL}"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+networks:
+  proxy:
+    external: true
+
+volumes:
+  caddy_data:
+  caddy_config:

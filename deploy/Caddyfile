@@ -1,0 +1,20 @@
+# Dedicated Caddy for replicate-mcp.sena-labs.dev only.
+# Domain + ACME email come from the environment (set in deploy/.env).
+{
+	email {$ACME_EMAIL}
+}
+
+{$MCP_DOMAIN} {
+	reverse_proxy replicate-mcp:8088
+
+	# Don't advertise the server software.
+	header -Server
+
+	# Access log WITHOUT the query string, so a token passed as a query-param
+	# fallback never lands in logs (the preferred path is the
+	# x-replicate-api-token header, which Caddy does not log).
+	log {
+		output stdout
+		format json
+	}
+}
