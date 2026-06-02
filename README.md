@@ -1,7 +1,7 @@
 # Replicate MCP Server
 
 <p align="center">
-  <img src="assets/icon.png" alt="Replicate MCP Server" width="128" height="128">
+  <img src="assets/banner.png" alt="Replicate MCP Server — universal MCP for the full Replicate catalog" width="100%">
 </p>
 
 [![smithery badge](https://smithery.ai/badge/sena-labs/replicate-mcp-server)](https://smithery.ai/servers/sena-labs/replicate-mcp-server)

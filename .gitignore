@@ -20,8 +20,9 @@ ruvector.db
 mcpb/build/
 mcpb/*.mcpb
 
-# Icon-generation exploration (the chosen assets/icon.png is tracked)
+# Image-generation exploration (chosen assets/icon.png + assets/banner.png tracked)
 assets/candidates/
+assets/banner-candidates/
 
 # Deploy secrets (PUBLIC_IP / domain / ACME email live only on the host)
 deploy/.env
