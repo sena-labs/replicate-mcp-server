@@ -9,6 +9,7 @@
   "homepage": "https://github.com/sena-labs/replicate-mcp-server",
   "documentation": "https://github.com/sena-labs/replicate-mcp-server#readme",
   "license": "MIT",
+  "icon": "icon.png",
   "keywords": [
     "replicate",
     "image-generation",

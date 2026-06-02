@@ -19,3 +19,6 @@ ruvector.db
 # MCPB build output (manifest + build script are tracked; artifacts are not)
 mcpb/build/
 mcpb/*.mcpb
+
+# Icon-generation exploration (the chosen assets/icon.png is tracked)
+assets/candidates/

@@ -15,7 +15,7 @@ description: |
   stdio and a webhook-friendly HTTP/SSE transport.
 homepage: https://github.com/sena-labs/replicate-mcp-server
 license: MIT
-icon: https://replicate.com/favicon.ico
+icon: https://raw.githubusercontent.com/sena-labs/replicate-mcp-server/main/assets/icon.png
 
 # Tags help Smithery surface the server in category browsing.
 tags:

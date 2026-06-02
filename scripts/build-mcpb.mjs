@@ -28,8 +28,9 @@ run(
     "--target=node20 --outfile=mcpb/build/server/index.js",
 );
 
-// 3. Manifest beside the bundled server.
+// 3. Manifest + icon beside the bundled server.
 copyFileSync("mcpb/manifest.json", "mcpb/build/manifest.json");
+copyFileSync("assets/icon.png", "mcpb/build/icon.png");
 
 // 4. Validate + pack into a distributable .mcpb.
 run("npx --yes @anthropic-ai/mcpb validate mcpb/build/manifest.json");
