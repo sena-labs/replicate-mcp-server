@@ -2,9 +2,11 @@
 
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20this%20project-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/senalabs)
 
-An [MCP](https://modelcontextprotocol.io) server that gives Claude native access to the full [Replicate](https://replicate.com) catalog: image generation, video, music, speech, upscaling, segmentation, LLMs — anything Replicate hosts.
+A universal, cross-platform [MCP](https://modelcontextprotocol.io) server that gives **any MCP client** — Claude Desktop, the claude.ai web app (Connectors), Cursor, Cline / Continue in VS Code, or your own application — native access to the full [Replicate](https://replicate.com) catalog: image generation, video, music, speech, upscaling, segmentation, LLMs, voice cloning, 3D, lipsync — anything Replicate hosts.
 
-Once installed in Claude Desktop, you can simply ask:
+It speaks both transports: **stdio** (the standard for local desktop/editor integrations) and **HTTP/SSE** (for remote/web clients and your own services).
+
+Once connected to your MCP client, you can simply ask:
 
 > _"Generate a cinematic shot of a lighthouse in a storm, 21:9"_
 > _"Write a 30-second synthwave track"_
@@ -12,7 +14,7 @@ Once installed in Claude Desktop, you can simply ask:
 > _"Read this paragraph in a British male voice"_
 > _"Upscale this image 4x"_
 
-…and Claude calls the right Replicate model, waits for the result, and downloads the output to your machine.
+…and the assistant calls the right Replicate model, waits for the result, and (on local/stdio setups) downloads the output to your machine.
 
 ---
 
@@ -90,7 +92,7 @@ The editing tools (`replicate_upscale_image`, `replicate_inpaint`, `replicate_re
 
 - **Node.js ≥ 20** (uses native `fetch` and Web Streams)
 - A **Replicate account** with an API token: https://replicate.com/account/api-tokens
-- **Claude Desktop** (macOS, Windows, or Linux)
+- **An MCP client** — e.g. Claude Desktop (macOS/Windows/Linux), the claude.ai web app, Cursor, Cline / Continue (VS Code), or any custom MCP host. The walkthrough below uses Claude Desktop as the example; the same `command` / `args` / `env` block works in any client's MCP config. For remote/web clients, see [HTTP / SSE transport](#http--sse-transport).
 
 ---
 
@@ -113,9 +115,9 @@ This produces `dist/index.js`, which is the server entry point.
 2. Click **Create token**
 3. Copy the token (starts with `r8_...`)
 
-### 3. Wire it up in Claude Desktop
+### 3. Connect it to your MCP client (Claude Desktop shown)
 
-Find your Claude Desktop config file:
+The MCP `command` / `args` / `env` block below is identical across clients — only the location of the config file differs (Cursor: `~/.cursor/mcp.json`; Cline/Continue: the extension's MCP settings; custom hosts: your own launcher). For Claude Desktop, find your config file:
 
 - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
@@ -156,7 +158,7 @@ Fully quit and reopen Claude Desktop. You should see "replicate" listed in the t
 
 ## Usage examples
 
-Once installed, just talk to Claude naturally:
+Once connected, just talk to your assistant naturally (examples use Claude phrasing, but any MCP-capable assistant works):
 
 **Images**
 > Generate an origami fox in a misty forest, 16:9 aspect ratio.
@@ -264,9 +266,10 @@ Check `REPLICATE_DOWNLOAD_DIR`. Files are organised as `<dir>/<sanitized-model>/
 
 ## Deploy as platform (v3.0+)
 
-Beyond personal Claude Desktop use, v3.0 supports running the server as a
-**multi-user platform** — HTTP transport, multi-token pool, webhook-driven
-async completion, Docker, npm distribution.
+Beyond a single local stdio client, the server also runs as a
+**multi-user platform** — HTTP/SSE transport (for claude.ai web Connectors,
+remote editors, and custom apps), multi-token pool, webhook-driven async
+completion, Docker, npm distribution.
 
 ### HTTP / SSE transport
 

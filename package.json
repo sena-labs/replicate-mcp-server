@@ -1,7 +1,7 @@
 {
   "name": "replicate-mcp-server",
   "version": "3.1.0",
-  "description": "MCP server giving Claude native access to Replicate's full catalog: image, video, audio, music, speech, LLM, vision, upscale, inpaint, segment, transcription, embeddings — anything Replicate hosts. Stdio + HTTP/SSE transport, multi-token pool, rate-limit aware, cost estimator.",
+  "description": "Universal MCP server giving any MCP client (Claude Desktop, claude.ai, Cursor, Cline, custom apps) native access to Replicate's full catalog: image, video, audio, music, speech, LLM, vision, upscale, inpaint, segment, transcription, embeddings, voice cloning, 3D, lipsync — anything Replicate hosts. Stdio + HTTP/SSE transport, multi-token pool, rate-limit aware, cost estimator.",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
