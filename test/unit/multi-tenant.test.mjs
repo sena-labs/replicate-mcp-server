@@ -11,30 +11,27 @@ import { parseSessionConfig } from "../../dist/http-server.js";
 import { requestContext } from "../../dist/request-context.js";
 import { getClient, _resetClientForTests } from "../../dist/replicate.js";
 
-const b64 = (obj) => Buffer.from(JSON.stringify(obj)).toString("base64");
 const u = (qs) => new URL(`http://localhost/mcp${qs}`);
 
-test("parseSessionConfig: base64 config JSON (snake_case)", () => {
-  const ctx = parseSessionConfig(u(`?config=${b64({ replicate_api_token: "r8_snake" })}`));
-  assert.equal(ctx.replicateToken, "r8_snake");
+test("parseSessionConfig: header form (preferred)", () => {
+  const ctx = parseSessionConfig(u(""), { "x-replicate-api-token": "r8_header" });
+  assert.equal(ctx.replicateToken, "r8_header");
 });
 
-test("parseSessionConfig: base64 config JSON (camelCase)", () => {
-  const ctx = parseSessionConfig(u(`?config=${b64({ replicateApiToken: "r8_camel" })}`));
-  assert.equal(ctx.replicateToken, "r8_camel");
+test("parseSessionConfig: header wins over query param", () => {
+  const ctx = parseSessionConfig(u("?replicate_api_token=r8_query"), {
+    "x-replicate-api-token": "r8_header",
+  });
+  assert.equal(ctx.replicateToken, "r8_header");
 });
 
-test("parseSessionConfig: direct query param", () => {
+test("parseSessionConfig: default query param (Smithery transport)", () => {
   const ctx = parseSessionConfig(u(`?replicate_api_token=r8_direct`));
   assert.equal(ctx.replicateToken, "r8_direct");
 });
 
-test("parseSessionConfig: nothing -> empty context", () => {
+test("parseSessionConfig: nothing -> empty context (scan path)", () => {
   assert.deepEqual(parseSessionConfig(u("")), {});
-});
-
-test("parseSessionConfig: malformed base64 -> empty (no throw)", () => {
-  assert.deepEqual(parseSessionConfig(u("?config=%%%notb64%%%")), {});
 });
 
 test("getClient: session token works with no env pool", () => {
