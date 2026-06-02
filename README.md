@@ -156,6 +156,32 @@ Fully quit and reopen Claude Desktop. You should see "replicate" listed in the t
 
 ---
 
+## VS Code (native MCP)
+
+VS Code has built-in MCP support. This repo ships a ready-to-use [`.vscode/mcp.json`](.vscode/mcp.json) that runs the published npm package locally and prompts for your token (stored masked, never written to the file):
+
+```json
+{
+  "inputs": [
+    { "type": "promptString", "id": "replicate_token", "description": "Replicate API token", "password": true }
+  ],
+  "servers": {
+    "replicate": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "replicate-mcp-server"],
+      "env": { "REPLICATE_API_TOKEN": "${input:replicate_token}" }
+    }
+  }
+}
+```
+
+Open the file in VS Code and click **Start** above the `replicate` server (or run _MCP: List Servers_). VS Code asks for the token once.
+
+> **Note on the Smithery "One-Click Install":** it wires VS Code to Smithery's **hosted** gateway (`mcp.smithery.run`), which runs the server on Smithery's infrastructure and would route your personal Replicate token through it on every call. For a personal API token, prefer the **local stdio** config above — the token never leaves your machine.
+
+---
+
 ## Usage examples
 
 Once connected, just talk to your assistant naturally (examples use Claude phrasing, but any MCP-capable assistant works):
