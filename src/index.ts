@@ -39,6 +39,7 @@ import { registerManagementTools } from "./tools/management.js";
 import { registerOrchestrationTools } from "./tools/orchestration.js";
 import { registerAccountTools } from "./tools/account.js";
 import { registerPrompts } from "./prompts.js";
+import { registerResources } from "./resources.js";
 
 /* ---------- Server factory ----------
  *
@@ -60,6 +61,7 @@ function buildServer(): McpServer {
   registerOrchestrationTools(server); // batch + pipeline orchestration
   registerAccountTools(server); // list / cancel / estimate / refresh
   registerPrompts(server); // workflow prompts (multi-tool flows)
+  registerResources(server); // model catalog + capabilities (read-only context)
   return server;
 }
 

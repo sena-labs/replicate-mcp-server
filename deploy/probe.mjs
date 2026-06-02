@@ -48,10 +48,12 @@ if (sid) {
 }
 const tools = await rpc("tools/list", {}, sid);
 const prompts = await rpc("prompts/list", {}, sid);
+const resources = await rpc("resources/list", {}, sid);
 
 console.log("initialize:", init.status, "session:", sid ? "yes" : "no");
 console.log("tools:", tools.json?.result?.tools?.length ?? "ERR");
 console.log("prompts:", prompts.json?.result?.prompts?.length ?? "ERR");
+console.log("resources:", resources.json?.result?.resources?.length ?? "ERR");
 const ok = init.status === 200 && (tools.json?.result?.tools?.length ?? 0) > 0;
 console.log(ok ? "SCAN-OK (server lists tools without a token)" : "SCAN-FAIL");
 process.exit(ok ? 0 : 1);
