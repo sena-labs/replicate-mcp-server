@@ -12,8 +12,18 @@ each user supplies their own via the Smithery session config
 
 1. **DNS** (Namecheap → Advanced DNS): add an `A` record
    - Host `replicate-mcp` → Value `<PUBLIC_IP>` (e.g. `178.105.2.218`), TTL automatic.
-2. **Hetzner Cloud Firewall** (console): ensure inbound TCP **80** and **443**
-   are allowed (the in-box `ufw` rules are added by the deploy below).
+2. **Hetzner Cloud Firewall** (console): if a firewall is attached to the
+   server, allow inbound TCP **80** and **443**.
+3. **In-box `DOCKER-USER` chain** (host-specific): this host hardens Docker so
+   published ports are reachable only via Tailscale (`-A DOCKER-USER -i eth0 -j
+   DROP`). To expose **only** 80/443 on the public NIC (and nothing else), insert
+   one ACCEPT before that DROP and persist it:
+   ```bash
+   iptables -I DOCKER-USER 1 -i eth0 -p tcp -m conntrack --ctstate NEW \
+     -m multiport --dports 80,443 -j ACCEPT
+   netfilter-persistent save
+   ```
+   All other Docker-published ports stay Tailscale-only.
 
 ## Deploy (on the VPS)
 
