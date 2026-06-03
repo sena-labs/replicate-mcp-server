@@ -23,6 +23,41 @@ Once connected to your MCP client, you can simply ask:
 
 ---
 
+## Install
+
+**Fastest — one-click via [Smithery](https://smithery.ai/server/sena-labs/replicate-mcp-server)** ([![smithery badge](https://smithery.ai/badge/sena-labs/replicate-mcp-server?refresh=20260603)](https://smithery.ai/servers/sena-labs/replicate-mcp-server)): open the [server page](https://smithery.ai/server/sena-labs/replicate-mcp-server) and copy the **Install** snippet for your client (Claude, Cursor, VS Code, Cline, Windsurf, …). It wires the server in and prompts for your Replicate token. _(Routes through Smithery's hosted gateway — easiest, zero local setup.)_
+
+**Token-private — npm + stdio** (your Replicate token never leaves your machine):
+
+```bash
+npx -y replicate-mcp-server
+```
+
+…or drop it into any MCP client's config (full walkthrough under [Installation](#installation)).
+
+**Claude Desktop one-file install:** download the latest [`.mcpb` from Releases](https://github.com/sena-labs/replicate-mcp-server/releases/latest) and drag it onto Claude Desktop.
+
+**Already running (bring your own token):** `https://replicate-mcp.sena-labs.dev/mcp` — HTTP/SSE, multi-tenant; pass your token in the `x-replicate-api-token` header.
+
+Once connected, try the [example prompts](#try-it) below.
+
+---
+
+## Try it
+
+Once your client is connected, ask in plain language — the assistant picks the right tool, **waits for the result, and downloads the output locally**:
+
+> _"Generate a cinematic shot of a lighthouse in a storm, 21:9"_
+> _"Which is the cheapest model for a 5-second video? Then use it."_ — recommend → generate
+> _"Make 4 logo variations of a fox, flat vector style"_ — batch (concurrent)
+> _"Transcribe this audio, summarise it, then read the summary aloud"_ — DAG pipeline
+> _"Upscale this image 4×"_ · _"Write a 30-second synthwave track"_ · _"Read this in a British male voice"_
+> _"Kick off a Flux LoRA fine-tune on my dataset and tell me when it's done"_ — training
+
+Discovery tools (`replicate_recommend_model`, `replicate_search_models`, `replicate_estimate_cost`) and the 5 built-in workflow prompts help it chain multi-step jobs without you naming models.
+
+---
+
 ## What's inside
 
 36 tools and 63 curated models, designed to be both ergonomic for common cases and fully open-ended for everything else. Every generate/run tool **waits for completion and auto-downloads the outputs** to your machine — you ask once and get back local files, not a job id to babysit:
@@ -419,13 +454,7 @@ token authenticates each callback.
 
 ### Smithery listing
 
-`smithery.yaml` is included for one-click install via
-[smithery.ai](https://smithery.ai/new):
-
-1. Push the repo to GitHub.
-2. Submit at <https://smithery.ai/new>.
-3. Smithery generates the user-facing config UI from `smithery.yaml`'s
-   `configSchema` (token, optional pool, log level, download dir).
+This server is **live on Smithery**: [smithery.ai/server/sena-labs/replicate-mcp-server](https://smithery.ai/server/sena-labs/replicate-mcp-server) — scanned (36 tools, 5 prompts, 2 resources) and one-click installable into Claude, Cursor, VS Code, Cline, Windsurf, and other MCP clients. `smithery.yaml` defines the install-time config UI (token, optional pool, log level, download dir).
 
 ### claude.ai web Connector
 
