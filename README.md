@@ -514,10 +514,10 @@ If this project is useful to you, consider supporting its development:
 
 ## Trademarks & disclaimer
 
-This is an independent, community-built project. It is **not affiliated with, endorsed by, sponsored by, or officially connected to Replicate, Inc. or Anthropic, PBC.**
+This is an independent, community-built project. It is **not affiliated with, endorsed by, sponsored by, or officially connected to Replicate, Inc.**
 
 - **"Replicate"** and the Replicate logo are trademarks of **Replicate, Inc.** This server is an interoperability client for Replicate's public HTTP API; the name is used descriptively (nominative fair use) to indicate compatibility — not to imply origin or endorsement. For Replicate's own official MCP server, see [replicate.com/docs/reference/mcp](https://replicate.com/docs/reference/mcp).
-- **"Model Context Protocol"** and **"MCP"** are trademarks of **Anthropic, PBC.**
+- Built on the **Model Context Protocol (MCP)**, the open standard created by Anthropic.
 - Model names referenced (FLUX, Recraft, Whisper, Llama, etc.) are trademarks of their respective owners and are used only to identify the models you can run.
 
 You are responsible for complying with [Replicate's Terms of Service](https://replicate.com/terms) and the license of each model you invoke. Bundled third-party open-source components and their licenses are listed in [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md). The banner/logo use the [Inter](https://rsms.me/inter/) typeface (SIL Open Font License 1.1).
