@@ -1,5 +1,5 @@
 import Replicate from "replicate";
-import type { Prediction } from "replicate";
+import type { Prediction, Training, Deployment } from "replicate";
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile } from "node:fs/promises";
 import { join, extname, basename } from "node:path";
@@ -225,8 +225,51 @@ export async function runPrediction(args: {
   // Polling path (default when webhook is not configured).
   const { prediction: initial, client: usedClient } =
     await createPredictionWithRetry(model, input);
-  const final = await pollUntilDone(usedClient, initial, timeoutMs, maxPollIntervalMs);
-  return materializeResult(final, modelLabel, download);
+  return finishPrediction(usedClient, initial, {
+    download,
+    timeoutMs,
+    maxPollIntervalMs,
+    modelLabel,
+  });
+}
+
+/**
+ * Poll an already-created prediction to completion (or timeout) and
+ * materialize the result — the shared "finish" half of runPrediction's
+ * polling path. Exported so callers that create a prediction by a route
+ * other than predictions.create (e.g. deployments.predictions.create) can
+ * reuse the exact same wait + SSRF-guarded download + result-shaping logic.
+ */
+export async function finishPrediction(
+  client: Replicate,
+  prediction: Prediction,
+  opts: {
+    download: boolean;
+    timeoutMs?: number;
+    maxPollIntervalMs?: number;
+    /** Override the download/label folder. Defaults to the prediction's
+     *  own model id (version-suffix stripped). */
+    modelLabel?: string;
+  },
+): Promise<PredictionResult> {
+  const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const maxPollIntervalMs = opts.maxPollIntervalMs ?? POLL_INTERVAL_MS;
+  const modelLabel = opts.modelLabel ?? normaliseModelLabel(predictionModelLabel(prediction));
+  const final = await pollUntilDone(client, prediction, timeoutMs, maxPollIntervalMs);
+  return materializeResult(final, modelLabel, opts.download);
+}
+
+/** Best-effort model label for a prediction record. Deployment predictions
+ *  may not carry a `model` string, so fall back to the version (or a stable
+ *  placeholder) for the download folder name. */
+function predictionModelLabel(prediction: Prediction): string {
+  if (typeof prediction.model === "string" && prediction.model.length > 0) {
+    return prediction.model;
+  }
+  if (typeof prediction.version === "string" && prediction.version.length > 0) {
+    return `version:${prediction.version}`;
+  }
+  return "deployment";
 }
 
 /** Drop the version suffix from a model identifier so different forms of
@@ -981,6 +1024,218 @@ function parseOwnerName(modelId: string): { owner: string; name: string } {
     );
   }
   return { owner: parts[0], name: parts[1] };
+}
+
+/* ---------- Trainings (fine-tuning) ---------- */
+
+/** Compact view of a Replicate training record — the fields useful for
+ *  status reporting without dumping the full input/logs payload. */
+export interface TrainingSummary {
+  id: string;
+  status: string;
+  model?: string;
+  version?: string;
+  destination?: string;
+  created_at?: string;
+  completed_at?: string;
+  url?: string;
+  /** Trained model version id, present once the training succeeds. */
+  output_version?: string;
+  error?: string;
+}
+
+/** Defensively map a raw training record (SDK type or plain object) into a
+ *  TrainingSummary. Mirrors the asModelSummary / PredictionSummary mappers:
+ *  never trusts a field's presence/type. */
+function asTrainingSummary(value: unknown): TrainingSummary {
+  const t = (typeof value === "object" && value !== null
+    ? value
+    : {}) as Record<string, unknown>;
+  const urls =
+    typeof t["urls"] === "object" && t["urls"] !== null
+      ? (t["urls"] as Record<string, unknown>)
+      : undefined;
+  const output =
+    typeof t["output"] === "object" && t["output"] !== null
+      ? (t["output"] as Record<string, unknown>)
+      : undefined;
+  return {
+    id: String(t["id"] ?? ""),
+    status: String(t["status"] ?? "unknown"),
+    model: nonEmptyString(t["model"]),
+    version: nonEmptyString(t["version"]),
+    destination: nonEmptyString(t["destination"]),
+    created_at: nonEmptyString(t["created_at"]),
+    completed_at: nonEmptyString(t["completed_at"]),
+    url: urls ? nonEmptyString(urls["get"]) : undefined,
+    output_version: output ? nonEmptyString(output["version"]) : undefined,
+    error: t["error"] != null ? String(t["error"]) : undefined,
+  };
+}
+
+/** Start a fine-tuning run. `model` is the BASE trainer "owner/name"
+ *  (optionally ":version" — when present that version pin wins over the
+ *  separate `version` arg); `destination` is the "owner/name" the trained
+ *  weights are pushed to. */
+export async function createTraining(args: {
+  model: string;
+  version: string;
+  destination: string;
+  input: Record<string, unknown>;
+}): Promise<TrainingSummary> {
+  const client = getClient();
+  const { owner, name } = parseOwnerName(args.model);
+  // Allow callers to pin the trainer version inline as "owner/name:version".
+  const colon = args.model.indexOf(":");
+  const versionId = colon >= 0 ? args.model.slice(colon + 1) : args.version;
+  if (!versionId) {
+    throw new Error(
+      "A trainer version id is required. Pass it via `version` or inline as \"owner/name:version\".",
+    );
+  }
+  // Validate the destination shape up-front so the caller gets a clear
+  // message instead of a 422 from the API.
+  parseOwnerName(args.destination);
+  const training = (await client.trainings.create(
+    owner,
+    name,
+    versionId,
+    {
+      destination: args.destination as `${string}/${string}`,
+      input: stripDenylistedKeys(args.input),
+    },
+  )) as unknown as Training;
+  return asTrainingSummary(training);
+}
+
+/** Retrieve a single training by id. */
+export async function getTraining(trainingId: string): Promise<TrainingSummary> {
+  const client = getClient();
+  const training = await client.trainings.get(trainingId);
+  return asTrainingSummary(training);
+}
+
+/** List the most recent trainings on the authenticated account. */
+export async function listTrainings(limit: number): Promise<TrainingSummary[]> {
+  const client = getClient();
+  const page = await client.trainings.list();
+  const items = (page.results ?? []) as unknown[];
+  return items.slice(0, limit).map(asTrainingSummary);
+}
+
+/** Cancel an in-progress training. Replicate returns the updated record. */
+export async function cancelTraining(
+  trainingId: string,
+): Promise<TrainingSummary> {
+  const client = getClient();
+  const training = await client.trainings.cancel(trainingId);
+  return asTrainingSummary(training);
+}
+
+/* ---------- Deployments ---------- */
+
+/** Compact view of a Replicate deployment — owner/name plus the current
+ *  release's model/version/hardware when the API surfaces them. */
+export interface DeploymentSummary {
+  owner: string;
+  name: string;
+  current_release?: {
+    number?: number;
+    model?: string;
+    version?: string;
+    hardware?: string;
+    min_instances?: number;
+    max_instances?: number;
+  };
+}
+
+/** Defensively map a raw deployment record into a DeploymentSummary. The
+ *  current_release block is optional and its configuration may be partial. */
+function asDeploymentSummary(value: unknown): DeploymentSummary {
+  const d = (typeof value === "object" && value !== null
+    ? value
+    : {}) as Record<string, unknown>;
+  const release =
+    typeof d["current_release"] === "object" && d["current_release"] !== null
+      ? (d["current_release"] as Record<string, unknown>)
+      : undefined;
+  const config =
+    release &&
+    typeof release["configuration"] === "object" &&
+    release["configuration"] !== null
+      ? (release["configuration"] as Record<string, unknown>)
+      : undefined;
+  const summary: DeploymentSummary = {
+    owner: String(d["owner"] ?? ""),
+    name: String(d["name"] ?? ""),
+  };
+  if (release) {
+    summary.current_release = {
+      number:
+        typeof release["number"] === "number" ? release["number"] : undefined,
+      model: nonEmptyString(release["model"]),
+      version: nonEmptyString(release["version"]),
+      hardware: config ? nonEmptyString(config["hardware"]) : undefined,
+      min_instances:
+        config && typeof config["min_instances"] === "number"
+          ? (config["min_instances"] as number)
+          : undefined,
+      max_instances:
+        config && typeof config["max_instances"] === "number"
+          ? (config["max_instances"] as number)
+          : undefined,
+    };
+  }
+  return summary;
+}
+
+/** List the deployments on the authenticated account. */
+export async function listDeployments(
+  limit: number,
+): Promise<DeploymentSummary[]> {
+  const client = getClient();
+  const page = await client.deployments.list();
+  const items = (page.results ?? []) as unknown[];
+  return items.slice(0, limit).map(asDeploymentSummary);
+}
+
+/** Retrieve a single deployment by owner + name. */
+export async function getDeployment(
+  owner: string,
+  name: string,
+): Promise<DeploymentSummary> {
+  const client = getClient();
+  const deployment = (await client.deployments.get(
+    owner,
+    name,
+  )) as unknown as Deployment;
+  return asDeploymentSummary(deployment);
+}
+
+/**
+ * Run a deployment: create a prediction against the deployment's current
+ * release, then WAIT + DOWNLOAD using the same machinery as the generate_*
+ * tools (finishPrediction → pollUntilDone + SSRF-guarded materializeResult).
+ * This wait-and-download behaviour is the differentiator vs the official MCP.
+ */
+export async function runDeployment(args: {
+  owner: string;
+  name: string;
+  input: Record<string, unknown>;
+  download: boolean;
+  timeoutMs?: number;
+}): Promise<PredictionResult> {
+  const client = getClient();
+  const prediction = await client.deployments.predictions.create(
+    args.owner,
+    args.name,
+    { input: stripDenylistedKeys(args.input) },
+  );
+  return finishPrediction(client, prediction, {
+    download: args.download,
+    timeoutMs: args.timeoutMs,
+    modelLabel: `${args.owner}/${args.name}`,
+  });
 }
 
 /* ---------- File upload ---------- */

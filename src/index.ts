@@ -38,6 +38,8 @@ import { registerMediaTools } from "./tools/media.js";
 import { registerManagementTools } from "./tools/management.js";
 import { registerOrchestrationTools } from "./tools/orchestration.js";
 import { registerAccountTools } from "./tools/account.js";
+import { registerTrainingTools } from "./tools/training.js";
+import { registerDeploymentTools } from "./tools/deployment.js";
 import { registerPrompts } from "./prompts.js";
 import { registerResources } from "./resources.js";
 
@@ -60,6 +62,8 @@ function buildServer(): McpServer {
   registerManagementTools(server); // run_model / search / schema / get_prediction / upload / recommend
   registerOrchestrationTools(server); // batch + pipeline orchestration
   registerAccountTools(server); // list / cancel / estimate / refresh
+  registerTrainingTools(server); // fine-tuning: create / get / list / cancel training
+  registerDeploymentTools(server); // deployments: list / get / run (wait+download)
   registerPrompts(server); // workflow prompts (multi-tool flows)
   registerResources(server); // model catalog + capabilities (read-only context)
   return server;

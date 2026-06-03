@@ -10,7 +10,10 @@
 import { createCanvas, loadImage, GlobalFonts } from "@napi-rs/canvas";
 import { writeFileSync, existsSync } from "node:fs";
 
-const SRC = process.argv[2] || "assets/banner.png";
+// Read the node-graph backdrop from a dedicated clean-background file when it
+// exists so re-running never double-composites text. Falls back to the legacy
+// assets/banner.png only if the dedicated bg is missing.
+const SRC = process.argv[2] || (existsSync("assets/banner-bg.png") ? "assets/banner-bg.png" : "assets/banner.png");
 const OUT = process.argv[3] || "assets/banner-ad.png";
 const LOGO = "assets/icon.png";
 
@@ -106,13 +109,13 @@ ctx.fillText("The entire Replicate AI catalog — for any MCP client.", X, 978);
 ctx.font = `41px "${SEMI}"`;
 ctx.fillStyle = "#BE92F2";
 try { ctx.letterSpacing = "3px"; } catch {}
-ctx.fillText("IMAGE   ·   VIDEO   ·   AUDIO   ·   3D   ·   VOICE", X, 1062);
+ctx.fillText("IMAGE   ·   VIDEO   ·   AUDIO   ·   3D   ·   VOICE   ·   FINE-TUNE", X, 1062);
 try { ctx.letterSpacing = "0px"; } catch {}
 
 // --- Stats (+20%) ---
 ctx.font = `36px "${BODY}"`;
 ctx.fillStyle = "#8A90A7";
-ctx.fillText("29 tools · run any Replicate model · 60+ curated · open-source", X, 1127);
+ctx.fillText("Waits + downloads · curated + smart routing · batch & pipelines · cost-aware", X, 1127);
 
 // --- Distribution pills (+20%) ---
 function pill(x, y, label, accent) {

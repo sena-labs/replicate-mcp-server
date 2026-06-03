@@ -918,6 +918,106 @@ export const RecommendModelInputSchema = z
   })
   .strict();
 
+/* ---------- Trainings (fine-tuning) ---------- */
+
+export const CreateTrainingInputSchema = z
+  .object({
+    model: z
+      .string()
+      .min(1)
+      .describe(
+        'The BASE trainer model as "owner/name" (or "owner/name:version" to pin the trainer version inline). Example: "ostris/flux-dev-lora-trainer".',
+      ),
+    version: z
+      .string()
+      .min(1)
+      .optional()
+      .describe(
+        'Trainer version id. Required unless you pinned it inline on `model` as "owner/name:version".',
+      ),
+    destination: z
+      .string()
+      .min(1)
+      .describe(
+        'Where the trained weights are pushed, as "owner/name". The destination model must already exist on your account.',
+      ),
+    input: z
+      .record(z.unknown())
+      .default({})
+      .describe(
+        "Training inputs as a JSON object (dataset URL + hyperparameters). The exact keys depend on the trainer — call replicate_get_model_schema on the trainer model to see them.",
+      ),
+  })
+  .strict();
+
+export const GetTrainingInputSchema = z
+  .object({
+    training_id: z
+      .string()
+      .min(1)
+      .describe("ID of the training run to inspect (returned by replicate_create_training)."),
+  })
+  .strict();
+
+export const ListTrainingsInputSchema = z
+  .object({
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(100)
+      .default(10)
+      .describe("Number of recent training runs to return (1–100). Default 10."),
+  })
+  .strict();
+
+export const CancelTrainingInputSchema = z
+  .object({
+    training_id: z
+      .string()
+      .min(1)
+      .describe("ID of the in-progress training run to cancel."),
+  })
+  .strict();
+
+/* ---------- Deployments ---------- */
+
+export const ListDeploymentsInputSchema = z
+  .object({
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(100)
+      .default(20)
+      .describe("Number of deployments to return (1–100). Default 20."),
+  })
+  .strict();
+
+export const GetDeploymentInputSchema = z
+  .object({
+    deployment: z
+      .string()
+      .min(1)
+      .describe('Deployment identifier as "owner/name".'),
+  })
+  .strict();
+
+export const RunDeploymentInputSchema = z
+  .object({
+    deployment: z
+      .string()
+      .min(1)
+      .describe('Deployment to run, as "owner/name". Inspect it first with replicate_get_deployment.'),
+    input: z
+      .record(z.unknown())
+      .default({})
+      .describe("Model input parameters as a JSON object — same shape the deployment's underlying model expects."),
+    download,
+    timeout_ms: timeoutMs,
+  })
+  .strict();
+
 /* ---------- Inferred types ---------- */
 
 export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
@@ -949,3 +1049,10 @@ export type BatchStatusInput = z.infer<typeof BatchStatusInputSchema>;
 export type PipelineStartInput = z.infer<typeof PipelineStartInputSchema>;
 export type PipelineStatusInput = z.infer<typeof PipelineStatusInputSchema>;
 export type RecommendModelInput = z.infer<typeof RecommendModelInputSchema>;
+export type CreateTrainingInput = z.infer<typeof CreateTrainingInputSchema>;
+export type GetTrainingInput = z.infer<typeof GetTrainingInputSchema>;
+export type ListTrainingsInput = z.infer<typeof ListTrainingsInputSchema>;
+export type CancelTrainingInput = z.infer<typeof CancelTrainingInputSchema>;
+export type ListDeploymentsInput = z.infer<typeof ListDeploymentsInputSchema>;
+export type GetDeploymentInput = z.infer<typeof GetDeploymentInputSchema>;
+export type RunDeploymentInput = z.infer<typeof RunDeploymentInputSchema>;

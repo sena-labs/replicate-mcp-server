@@ -25,7 +25,7 @@ Once connected to your MCP client, you can simply ask:
 
 ## What's inside
 
-29 tools and 63 curated models, designed to be both ergonomic for common cases and fully open-ended for everything else:
+36 tools and 63 curated models, designed to be both ergonomic for common cases and fully open-ended for everything else. Every generate/run tool **waits for completion and auto-downloads the outputs** to your machine — you ask once and get back local files, not a job id to babysit:
 
 ### Curated generation tools
 
@@ -61,6 +61,23 @@ Once connected to your MCP client, you can simply ask:
 | `replicate_recommend_model` | Rank curated models in a category by priority (speed / cost / quality / balanced) with cost estimates — advises which model to use. |
 | `replicate_refresh_models` | Discover popular Replicate models not yet in the curated registry. |
 
+### Fine-tuning (trainings)
+
+| Tool | Purpose |
+|---|---|
+| `replicate_create_training` | Kick off a fine-tune / training run on a trainable base model (e.g. a Flux LoRA) with your dataset + parameters. |
+| `replicate_get_training` | Poll a training by id (status, logs, resulting model version). |
+| `replicate_list_trainings` | List your recent training runs (id, model, status, timestamps). |
+| `replicate_cancel_training` | Cancel an in-progress training run by id. |
+
+### Deployments
+
+| Tool | Purpose |
+|---|---|
+| `replicate_list_deployments` | List your Replicate deployments (owner/name, current model + version). |
+| `replicate_get_deployment` | Inspect one deployment (model, version, hardware, autoscaling min/max). |
+| `replicate_run_deployment` | Run a prediction against a deployment — **waits for completion and auto-downloads** the outputs, same as the curated generate tools. |
+
 ### Prediction management + cost
 
 | Tool | Purpose |
@@ -90,6 +107,30 @@ The editing tools (`replicate_upscale_image`, `replicate_inpaint`, `replicate_re
 - **You have a local path** (Claude Desktop): `replicate_upload_file({ file_path: "C:/Users/you/photo.jpg" })` → URL → pass to the editing tool. If an image is dragged/pasted into the chat, save it to disk first — the server cannot read chat attachments directly, and Claude Desktop cannot reproduce a large image's exact bytes as a tool argument.
 - **You have the bytes in memory** (claude.ai web with a code container): read the uploaded file in the container, base64-encode it, then `replicate_upload_file({ base64_data: "data:image/png;base64,..." })` → URL → editing tool. `base64_data` accepts a bare base64 string or a full `data:<mime>;base64,...` URI.
 - **You already have a URL**: pass it straight to the editing tool — no upload needed.
+
+---
+
+## Why this over the official Replicate MCP?
+
+Replicate ships its own [official MCP](https://replicate.com/docs/reference/mcp) (`replicate-mcp` on npm, hosted at `mcp.replicate.com`). It's a great, free, always-up-to-date **1:1 bridge to the REST API** — Stainless-generated from Replicate's OpenAPI spec, ~37 generic tools that mirror each endpoint (account, collections, deployments, files, hardware, models, predictions, trainings, webhooks), plus a `--tools=dynamic` mode and a Deno "Code Mode" sandbox.
+
+This server is built for a different job. The official MCP is a **thin, generic API bridge**: to make an image you call `create_predictions` with a raw model id and raw input JSON, and the LLM has to look up each model's input schema itself; it returns `starting` and does **not** wait or download (you opt into `Prefer: wait`, capped at 60s, then poll manually). This server is a **batteries-included creative studio**: task-oriented tools with sane defaults, a curated model registry, built-in orchestration, and cost awareness — every generate/run tool **waits for completion and auto-downloads** the outputs locally.
+
+| Axis | Official Replicate MCP | This server (sena-labs) |
+|---|---|---|
+| Philosophy | Thin generic API bridge (1:1 REST) | Task-oriented creative studio |
+| Tools | ~37 generic REST tools (+ dynamic/code modes) | 36 task tools (`generate_image/video/audio/speech/3d`, `clone_voice`, `lipsync`, `upscale`, `inpaint`, `segment`, `remove_background`, `transcribe`, `vision`, `chat`, `embed`) |
+| Media helpers | None — raw `predictions.create` + raw input JSON | Purpose-built tools with sane defaults (aspect ratio, etc.) |
+| Run UX | Returns `starting`; opt-in `Prefer: wait` (≤60s) then **manual poll** | **Waits for completion AND auto-downloads** outputs locally |
+| Model curation | None — you supply the model + look up its schema yourself | 60+ curated models + `recommend_model` + smart routing + `search_models` + `get_model_schema` |
+| Orchestration | None | Async batch (`batch_start/status`) + DAG pipelines (`pipeline_start/status`) |
+| Cost | None | `estimate_cost` pre-flight USD estimate |
+| Fine-tuning + deployments | Yes (generic REST) | Yes — `create/get/list/cancel_training` + `list/get/run_deployment` (run waits + downloads) |
+| Extras | OAuth, auto-sync to API | 5 workflow prompts + 2 MCP resources (catalog + capabilities) |
+| REST breadth | Broader raw coverage (collections, files, hardware, webhooks, account) | Focused on creative tasks + the orchestration/cost layer on top |
+| Hosted / official | Official, free, hosted at `mcp.replicate.com` with OAuth, auto-synced | Self-hostable, multi-tenant (per-user token), stdio + HTTP/SSE |
+
+**In short:** the official MCP is the right tool if you want exhaustive, always-current raw REST access (and a free hosted endpoint with OAuth). This server is the right tool if you want a curated, orchestrated, cost-aware creative workflow where you describe what you want and get finished files back — no schema lookups, no manual polling, no manual downloads. They're complementary: use the official one for full-surface API plumbing, use this one for getting creative work done.
 
 ---
 

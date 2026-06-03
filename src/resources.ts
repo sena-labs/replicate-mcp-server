@@ -97,6 +97,8 @@ export function registerResources(server: McpServer): void {
                 "DAG pipelines",
                 "model recommender",
                 "pre-call cost estimator",
+                "fine-tuning (trainings)",
+                "deployments (run with wait+download)",
                 "prediction history / cancel",
                 "multi-token round-robin",
                 "per-session token (multi-tenant)",

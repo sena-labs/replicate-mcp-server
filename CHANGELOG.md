@@ -3,6 +3,18 @@
 All notable changes to `replicate-mcp-server`. Format roughly follows
 [Keep a Changelog](https://keepachangelog.com/) with [Semantic Versioning](https://semver.org/).
 
+## [3.2.0] — 2026-06-03
+
+### Added — new tools (29 → 36)
+
+- **Fine-tuning (trainings)** — `replicate_create_training`, `replicate_get_training`, `replicate_list_trainings`, `replicate_cancel_training`: kick off a training/fine-tune run (e.g. a Flux LoRA) on a trainable base model with your dataset + parameters, then poll status / logs / resulting model version, list recent runs, and cancel an in-progress run.
+- **Deployments** — `replicate_list_deployments`, `replicate_get_deployment`, `replicate_run_deployment`: list and inspect your Replicate deployments (model, version, hardware, autoscaling min/max) and run predictions against them. `replicate_run_deployment` **waits for completion and auto-downloads** the outputs, just like the curated generate tools.
+
+### Added — docs
+
+- README gains a **"Why this over the official Replicate MCP?"** section: a fair, side-by-side comparison (philosophy, tools, media helpers, run UX [wait+download vs manual poll], curation, orchestration, cost, REST coverage, hosted/official) positioning this server as a batteries-included creative studio versus the official MCP's thin generic 1:1 REST bridge.
+- README tool tables, `package.json`, `mcpb/manifest.json`, and `smithery.yaml` updated for the new trainings + deployments capabilities and the 29 → 36 tool count.
+
 ## [3.1.0] — 2026-06-02
 
 ### Added — new tools (19 → 29)

@@ -94,8 +94,10 @@ async function run() {
       "replicate_batch_start",
       "replicate_batch_status",
       "replicate_cancel_prediction",
+      "replicate_cancel_training",
       "replicate_chat",
       "replicate_clone_voice",
+      "replicate_create_training",
       "replicate_embed_text",
       "replicate_estimate_cost",
       "replicate_generate_3d",
@@ -103,16 +105,21 @@ async function run() {
       "replicate_generate_image",
       "replicate_generate_speech",
       "replicate_generate_video",
+      "replicate_get_deployment",
       "replicate_get_model_schema",
       "replicate_get_prediction",
+      "replicate_get_training",
       "replicate_inpaint",
       "replicate_lipsync",
+      "replicate_list_deployments",
       "replicate_list_predictions",
+      "replicate_list_trainings",
       "replicate_pipeline_start",
       "replicate_pipeline_status",
       "replicate_recommend_model",
       "replicate_refresh_models",
       "replicate_remove_background",
+      "replicate_run_deployment",
       "replicate_run_model",
       "replicate_search_models",
       "replicate_segment",
@@ -125,7 +132,7 @@ async function run() {
     const extra = names.filter((n) => !expected.includes(n));
     if (missing.length) fail("missing tools: " + missing.join(","));
     if (extra.length) fail("unexpected tools: " + extra.join(","));
-    if (!missing.length && !extra.length) ok(`tools/list -> 29 tools registered`);
+    if (!missing.length && !extra.length) ok(`tools/list -> 36 tools registered`);
 
     for (const t of list.result.tools) {
       if (!t.inputSchema) fail(`${t.name}: no inputSchema`);
