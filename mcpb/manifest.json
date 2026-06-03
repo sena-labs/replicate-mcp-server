@@ -3,7 +3,7 @@
   "manifest_version": "0.4",
   "name": "replicate-mcp-server",
   "display_name": "Replicate",
-  "version": "3.2.0",
+  "version": "3.2.1",
   "description": "Universal MCP server for the full Replicate catalog: image, video, audio, music, speech (TTS+STT), LLMs, vision, upscale, inpaint, segment, embeddings, voice cloning, 3D, lipsync, trainings (fine-tune) and deployments, plus async batch + DAG pipeline orchestration and a model recommender. Every generate/run tool waits for completion and auto-downloads outputs. 36 tools, 63 curated models.",
   "author": { "name": "Ivan Sena (sena-labs)" },
   "homepage": "https://github.com/sena-labs/replicate-mcp-server",
