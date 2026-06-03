@@ -17,16 +17,15 @@ const SRC = process.argv[2] || (existsSync("assets/banner-bg.png") ? "assets/ban
 const OUT = process.argv[3] || "assets/banner-ad.png";
 const LOGO = "assets/icon.png";
 
-for (const [path, name] of [
-  ["C:/Windows/Fonts/segoeuib.ttf", "Segoe UI Bold"],
-  ["C:/Windows/Fonts/seguisb.ttf", "Segoe UI Semibold"],
-  ["C:/Windows/Fonts/segoeui.ttf", "Segoe UI"],
-  ["C:/Windows/Fonts/arialbd.ttf", "Arial Bold"],
-  ["C:/Windows/Fonts/arial.ttf", "Arial"],
-]) { try { if (existsSync(path)) GlobalFonts.registerFromPath(path, name); } catch {} }
-const HEAVY = GlobalFonts.has("Segoe UI Bold") ? "Segoe UI Bold" : (GlobalFonts.has("Arial Bold") ? "Arial Bold" : "sans-serif");
-const SEMI = GlobalFonts.has("Segoe UI Semibold") ? "Segoe UI Semibold" : HEAVY;
-const BODY = GlobalFonts.has("Segoe UI") ? "Segoe UI" : (GlobalFonts.has("Arial") ? "Arial" : "sans-serif");
+// Inter (SIL Open Font License 1.1) — vendored in assets/fonts/ so the banner
+// is reproducible on any OS and carries no proprietary-font (Segoe/Arial)
+// redistribution ambiguity. Weights are numeric on a single "Inter" family.
+for (const w of [400, 600, 700, 800]) {
+  const p = `assets/fonts/Inter-${w}.woff2`;
+  try { if (existsSync(p)) GlobalFonts.registerFromPath(p, "Inter"); } catch {}
+}
+const FONT = GlobalFonts.has("Inter") ? "Inter" : "sans-serif";
+const HEAVY = "800", SEMI = "600", BODY = "400";
 
 const banner = await loadImage(SRC);
 const logo = await loadImage(LOGO);
@@ -88,7 +87,7 @@ ctx.textBaseline = "alphabetic";
 ctx.save();
 ctx.shadowColor = "rgba(0,0,0,0.6)";
 ctx.shadowBlur = 30;
-ctx.font = `187px "${HEAVY}"`;
+ctx.font = `${HEAVY} 187px "${FONT}"`;
 ctx.fillStyle = "#FFFFFF";
 ctx.fillText("Replicate", X, 676);
 const t2 = "MCP Server";
@@ -101,25 +100,25 @@ ctx.fillText(t2, X, 882);
 ctx.restore();
 
 // --- Tagline (+20%) ---
-ctx.font = `55px "${BODY}"`;
+ctx.font = `${BODY} 55px "${FONT}"`;
 ctx.fillStyle = "#C8CCDC";
 ctx.fillText("The entire Replicate AI catalog — for any MCP client.", X, 978);
 
 // --- Capability row (+20%) ---
-ctx.font = `41px "${SEMI}"`;
+ctx.font = `${SEMI} 41px "${FONT}"`;
 ctx.fillStyle = "#BE92F2";
 try { ctx.letterSpacing = "3px"; } catch {}
 ctx.fillText("IMAGE   ·   VIDEO   ·   AUDIO   ·   3D   ·   VOICE   ·   FINE-TUNE", X, 1062);
 try { ctx.letterSpacing = "0px"; } catch {}
 
 // --- Stats (+20%) ---
-ctx.font = `36px "${BODY}"`;
+ctx.font = `${BODY} 36px "${FONT}"`;
 ctx.fillStyle = "#8A90A7";
 ctx.fillText("Waits + downloads · curated + smart routing · batch & pipelines · cost-aware", X, 1127);
 
 // --- Distribution pills (+20%) ---
 function pill(x, y, label, accent) {
-  ctx.font = `34px "${SEMI}"`;
+  ctx.font = `${SEMI} 34px "${FONT}"`;
   const padX = 34, h = 70;
   const w = ctx.measureText(label).width + padX * 2;
   if (accent) {

@@ -32,6 +32,11 @@ run(
 copyFileSync("mcpb/manifest.json", "mcpb/build/manifest.json");
 copyFileSync("assets/icon.png", "mcpb/build/icon.png");
 
+// 3b. Third-party license attributions — the bundle concatenates the runtime
+// dependencies' source into server/index.js, so ship their licenses with it.
+run("node scripts/gen-third-party-licenses.mjs");
+copyFileSync("THIRD_PARTY_LICENSES.md", "mcpb/build/THIRD_PARTY_LICENSES.md");
+
 // 4. Validate + pack into a distributable .mcpb.
 run("npx --yes @anthropic-ai/mcpb validate mcpb/build/manifest.json");
 run("npx --yes @anthropic-ai/mcpb pack mcpb/build mcpb/replicate-mcp-server.mcpb");

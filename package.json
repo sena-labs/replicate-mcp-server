@@ -12,6 +12,7 @@
     "README.md",
     "CHANGELOG.md",
     "LICENSE",
+    "THIRD_PARTY_LICENSES.md",
     "smithery.yaml"
   ],
   "scripts": {
