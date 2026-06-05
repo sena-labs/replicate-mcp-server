@@ -1,0 +1,13 @@
+{
+  "type": "object",
+  "properties": {
+    "replicateApiToken": {
+      "type": "string",
+      "title": "Replicate API Token",
+      "description": "Your Replicate API token (starts with r8_). Each user supplies their own. Get one at https://replicate.com/account/api-tokens.",
+      "format": "password",
+      "x-from": { "header": "x-replicate-api-token" }
+    }
+  },
+  "required": ["replicateApiToken"]
+}

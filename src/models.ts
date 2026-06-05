@@ -149,7 +149,10 @@ export const AUDIO_MUSIC_MODELS: Record<string, CuratedModel> = {
     },
   },
   "ace-step": {
-    id: "lucataco/ace-step",
+    // Version-pinned: the bare "lucataco/ace-step" model route 404s on
+    // predictions.create({model}); only the versioned predictions.create({version})
+    // path works. Refresh this hash if the model publishes a new version.
+    id: "lucataco/ace-step:280fc4f9ee507577f880a167f639c02622421d8fecf492454320311217b688f1",
     description: "Generate full songs with lyrics. ~3-4 minutes.",
     speed: "slow",
   },
