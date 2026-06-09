@@ -60,7 +60,7 @@ Discovery tools (`replicate_recommend_model`, `replicate_search_models`, `replic
 
 ## What's inside
 
-36 tools and 63 curated models, designed to be both ergonomic for common cases and fully open-ended for everything else. Every generate/run tool **waits for completion and auto-downloads the outputs** to your machine — you ask once and get back local files, not a job id to babysit:
+36 tools and 66 curated models, designed to be both ergonomic for common cases and fully open-ended for everything else. Every generate/run tool **waits for completion and auto-downloads the outputs** to your machine — you ask once and get back local files, not a job id to babysit:
 
 ### Curated generation tools
 
