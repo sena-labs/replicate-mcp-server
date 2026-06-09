@@ -169,11 +169,12 @@ Models:
   - "ace-step": Full songs with lyrics. prompt → "tags" field (style/genre tags). Pass lyrics separately via extra_input.lyrics. ~3-4 minutes runtime.
   - "riffusion": Loop-friendly ambient/electronic. prompt → "prompt_a" field. No duration control.
   - "minimax-music": MiniMax Music 2.6. Full songs up to 6min. prompt=style description; pass lyrics via extra_input.lyrics.
+  - "lyria-3-pro": Google Lyria 3 Pro. Full songs up to 3min WITH sung vocals. Put genre, mood, lyrics, and structure ([Verse]/[Chorus]) directly in the prompt. No duration — do NOT pass duration_seconds. Also "lyria-3" (30s clips) and "lyria-2" (48kHz instrumental).
 
 Args:
-  - prompt (string): Description of the music. For ace-step this maps to the "tags" field (style tags like "rock, guitar, upbeat"). For riffusion this maps to "prompt_a".
-  - model (string, default "musicgen"): Curated key or "owner/name[:version]".
-  - duration_seconds (1-300, optional): Duration in seconds. Supported by musicgen and ace-step. Ignored for riffusion.
+  - prompt (string): Description of the music. For ace-step this maps to the "tags" field (style tags like "rock, guitar, upbeat"). For riffusion this maps to "prompt_a". For lyria put genre/mood/lyrics/structure here.
+  - model (string, default "musicgen"): Curated key (musicgen, ace-step, riffusion, minimax-music, lyria-3-pro, lyria-3, lyria-2) or "owner/name[:version]".
+  - duration_seconds (1-300, optional): Duration in seconds. Supported by musicgen and ace-step. Ignored for riffusion and the lyria models (they have no duration parameter).
   - extra_input (object, optional): Additional inputs. Examples: {temperature: 1.0, top_k: 250} for MusicGen; {lyrics: "verse lyrics here"} for ace-step.
   - download (boolean, default true): Download as MP3/WAV.
   - timeout_ms: Default 300000 (5min).

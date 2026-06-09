@@ -31,3 +31,4 @@ assets/banner-ad.png
 
 # Deploy secrets (PUBLIC_IP / domain / ACME email live only on the host)
 deploy/.env
+.tmp/

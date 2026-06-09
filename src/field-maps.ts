@@ -16,7 +16,12 @@ export const AUDIO_PROMPT_FIELD: Record<string, string> = {
 };
 
 /** Models whose API has no duration parameter — don't send it. */
-export const AUDIO_NO_DURATION = new Set(["riffusion"]);
+export const AUDIO_NO_DURATION = new Set([
+  "riffusion",
+  "lyria-2",
+  "lyria-3",
+  "lyria-3-pro",
+]);
 
 /** Per-model field name for the starting image in image-to-video requests.
  *  Models use different field names — a single "start_image" default breaks

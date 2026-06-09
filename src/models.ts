@@ -166,6 +166,24 @@ export const AUDIO_MUSIC_MODELS: Record<string, CuratedModel> = {
     description: "MiniMax Music 2.6. Full songs up to 6min. prompt=style tags; pass lyrics via extra_input.lyrics.",
     speed: "slow",
   },
+  "lyria-3-pro": {
+    // No `duration` input — length is driven by the prompt (structure tags
+    // like [Verse]/[Chorus] and [0:00-0:30] timestamps). Listed in
+    // AUDIO_NO_DURATION so the audio handler never sends `duration`.
+    id: "google/lyria-3-pro",
+    description: "Google Lyria 3 Pro. Full songs up to 3 minutes WITH vocals. Put genre, mood, lyrics, and structure tags ([Verse]/[Chorus]) inside the prompt. No duration parameter.",
+    speed: "slow",
+  },
+  "lyria-3": {
+    id: "google/lyria-3",
+    description: "Google Lyria 3. 30-second music clips from text prompts or images. No duration parameter.",
+    speed: "medium",
+  },
+  "lyria-2": {
+    id: "google/lyria-2",
+    description: "Google Lyria 2. 48kHz stereo music from text prompts. No duration parameter.",
+    speed: "medium",
+  },
 };
 
 export const TTS_MODELS: Record<string, CuratedModel> = {

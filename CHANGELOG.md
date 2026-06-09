@@ -3,6 +3,16 @@
 All notable changes to `replicate-mcp-server`. Format roughly follows
 [Keep a Changelog](https://keepachangelog.com/) with [Semantic Versioning](https://semver.org/).
 
+## [3.2.2] — 2026-06-09
+
+### Added — curated models
+
+- **Google Lyria** music models added to the audio registry: `lyria-3-pro` (full songs up to 3 minutes **with sung vocals**), `lyria-3` (30-second clips), `lyria-2` (48 kHz instrumental). Reachable by curated key or full id (`google/lyria-3-pro`).
+
+### Fixed
+
+- `replicate_generate_audio` no longer sends an unsupported `duration` field to the Lyria models — they have **no** duration parameter (length is driven by the prompt and `[Verse]`/`[Chorus]`/timestamp tags). Previously a Lyria request with `duration_seconds` failed Replicate input validation (`Unexpected field 'duration'`). The Lyria keys are now in `AUDIO_NO_DURATION`, and the `replicate_generate_audio` tool description documents that Lyria takes lyrics/structure inside the prompt.
+
 ## [3.2.1] — 2026-06-03
 
 ### Changed — legal / licensing (no code or tool behavior change)
