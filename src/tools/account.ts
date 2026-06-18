@@ -49,8 +49,17 @@ const _ALL_REGISTRIES = [
   STT_MODELS, INPAINT_MODELS, SEGMENT_MODELS, EMBED_MODELS,
   VOICE_CLONE_MODELS, THREED_MODELS, LIPSYNC_MODELS,
 ];
+/** Curated model ids with any ":version" suffix stripped. refresh_models
+ *  compares against the bare "owner/name" form returned by the catalog
+ *  search, so a version-pinned curated id (e.g. ace-step) must be normalised
+ *  here or it would never match and the model would be wrongly surfaced as a
+ *  new suggestion instead of counted as already-curated. */
+function bareModelId(id: string): string {
+  const colon = id.indexOf(":");
+  return colon >= 0 ? id.slice(0, colon) : id;
+}
 const CURATED_MODEL_IDS = new Set(
-  _ALL_REGISTRIES.flatMap((r) => Object.values(r).map((m) => m.id)),
+  _ALL_REGISTRIES.flatMap((r) => Object.values(r).map((m) => bareModelId(m.id))),
 );
 
 export function registerAccountTools(server: McpServer): void {
