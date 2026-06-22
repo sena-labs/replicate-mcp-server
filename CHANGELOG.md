@@ -3,6 +3,12 @@
 All notable changes to `replicate-mcp-server`. Format roughly follows
 [Keep a Changelog](https://keepachangelog.com/) with [Semantic Versioning](https://semver.org/).
 
+## [3.2.3] — 2026-06-22
+
+### Fixed
+
+- Token-pool rotation now works on the **first** prediction after startup. `createPredictionWithRetry` computed its retry budget (`maxAttempts`) from `_pool?.size` *before* `getClientAndToken()` lazily initialized the pool, so the very first post-boot prediction capped retries at 1. With a multi-token `REPLICATE_API_TOKEN_POOL`, a 429 on that first call would mark the token rate-limited but then exit instead of rotating to the other healthy tokens. The client/pool is now initialized before the retry budget is computed.
+
 ## [3.2.2] — 2026-06-09
 
 ### Added — curated models

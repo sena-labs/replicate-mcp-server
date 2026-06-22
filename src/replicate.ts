@@ -328,9 +328,13 @@ async function createPredictionWithRetry(
   input: Record<string, unknown>,
   webhookUrl?: string,
 ): Promise<{ prediction: Prediction; client: Replicate }> {
+  // Initialize the client first: getClientAndToken() lazily builds the env
+  // pool via ensurePool(), so _pool?.size is only populated afterwards.
+  // Computing maxAttempts before this would read a null pool on the first
+  // call after startup and cap retries at 1, defeating fleet-wide rotation.
+  let ct = getClientAndToken();
   // A per-request session token isn't part of the env pool — don't rotate.
   const maxAttempts = getRequestToken() ? 1 : (_pool?.size ?? 1);
-  let ct = getClientAndToken();
   let lastErr: unknown;
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
