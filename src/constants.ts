@@ -106,7 +106,7 @@ export const POLL_INTERVAL_BY_CATEGORY: Readonly<Record<string, number>> = {
 
 /** Server identity. */
 export const SERVER_NAME = "replicate-mcp-server";
-export const SERVER_VERSION = "3.2.2";
+export const SERVER_VERSION = "3.2.3";
 
 /** Schema cache TTL — replicate_get_model_schema results are memoised
  *  for this many milliseconds to avoid re-hitting the Replicate API
