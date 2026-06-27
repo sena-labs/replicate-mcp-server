@@ -1,7 +1,7 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.sena-labs/replicate-mcp-server",
-  "description": "Universal Replicate MCP server — image, video, music, speech (TTS+STT), LLMs, vision, upscale, inpaint, segment, embeddings, voice cloning, 3D, lipsync, trainings and deployments. 36 tools, 66 curated models.",
+  "description": "Replicate MCP server - image, video, audio, speech, LLM, vision, upscale, 3D, training. 36 tools.",
   "version": "3.2.3",
   "repository": {
     "url": "https://github.com/sena-labs/replicate-mcp-server",
