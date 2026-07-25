@@ -10,7 +10,13 @@
  * Run: npm run build:mcpb
  */
 import { execSync } from "node:child_process";
-import { rmSync, mkdirSync, copyFileSync } from "node:fs";
+import {
+  rmSync,
+  mkdirSync,
+  copyFileSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 
 function run(cmd) {
   execSync(cmd, { stdio: "inherit" });
@@ -28,8 +34,20 @@ run(
     "--target=node20 --outfile=mcpb/build/server/index.js",
 );
 
-// 3. Manifest + icon beside the bundled server.
-copyFileSync("mcpb/manifest.json", "mcpb/build/manifest.json");
+// 3. Manifest + icon beside the bundled server. package.json is the single
+// source of truth for the version, so the bundle can never ship mislabelled.
+const pkgVersion = JSON.parse(readFileSync("package.json", "utf8")).version;
+const manifest = JSON.parse(readFileSync("mcpb/manifest.json", "utf8"));
+if (manifest.version !== pkgVersion) {
+  console.warn(
+    `mcpb/manifest.json says ${manifest.version}, package.json says ${pkgVersion} — using ${pkgVersion}.`,
+  );
+  manifest.version = pkgVersion;
+}
+writeFileSync(
+  "mcpb/build/manifest.json",
+  `${JSON.stringify(manifest, null, 2)}\n`,
+);
 copyFileSync("assets/icon.png", "mcpb/build/icon.png");
 
 // 3b. Third-party license attributions — the bundle concatenates the runtime

@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
 
+# Least privilege: CI only ever reads the repo. Overrides whatever the
+# repository-wide default GITHUB_TOKEN scope is set to.
+permissions:
+  contents: read
+
 jobs:
   test:
     name: Test (Node ${{ matrix.node-version }})

@@ -13,6 +13,7 @@
     "README.md",
     "CHANGELOG.md",
     "LICENSE",
+    "SECURITY.md",
     "THIRD_PARTY_LICENSES.md",
     "smithery.yaml"
   ],
@@ -47,7 +48,7 @@
     "sse",
     "openwebui"
   ],
-  "author": "Ivan Sena (sena-labs)",
+  "author": "Ivan Sena (sena-labs) <ivan.sena@sena-labs.dev>",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -55,7 +56,8 @@
   },
   "homepage": "https://github.com/sena-labs/replicate-mcp-server#readme",
   "bugs": {
-    "url": "https://github.com/sena-labs/replicate-mcp-server/issues"
+    "url": "https://github.com/sena-labs/replicate-mcp-server/issues",
+    "email": "ivan.sena@sena-labs.dev"
   },
   "engines": {
     "node": ">=20.0.0"

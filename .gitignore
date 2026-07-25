@@ -2,11 +2,29 @@ node_modules/
 dist/
 *.log
 .DS_Store
-.env
-.env.local
 
-# Claude Code session files (may contain API keys / permissions)
+# Env files — only the *.example templates are tracked; real ones never are.
+.env
+.env.*
+!.env.example
+!*.env.example
+
+# Agent / AI tooling state: session transcripts, daemon PIDs, metrics and
+# scratch notes. Machine-local and may quote file contents, prompts or tokens.
 .claude/
+.claude-flow/
+.ruflo/
+.remember/
+.serena/
+*.pid
+
+# Editor / IDE
+.idea/
+*.swp
+*.swo
+
+# TypeScript incremental build info
+*.tsbuildinfo
 
 # Runtime artifacts
 *.db
