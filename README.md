@@ -504,7 +504,11 @@ node test/stdio-test.mjs            # End-to-end MCP handshake + tool/list + too
 
 ---
 
-## Support
+## Support & contact
+
+- **Bugs and feature requests** — [open an issue](https://github.com/sena-labs/replicate-mcp-server/issues); that's the fastest path and keeps the answer searchable for everyone.
+- **Questions, integration help, anything else** — [ivan.sena@sena-labs.dev](mailto:ivan.sena@sena-labs.dev)
+- **Security vulnerabilities** — please don't file a public issue. Email [ivan.sena@sena-labs.dev](mailto:ivan.sena@sena-labs.dev) or open a [private advisory](https://github.com/sena-labs/replicate-mcp-server/security/advisories/new); see [SECURITY.md](SECURITY.md) for scope and response times.
 
 If this project is useful to you, consider supporting its development:
 

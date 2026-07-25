@@ -1,4 +1,4 @@
-# Dedicated Caddy for replicate-mcp.sena-labs.dev only.
+# Dedicated Caddy serving a single MCP hostname.
 # Domain + ACME email come from the environment (set in deploy/.env).
 {
 	email {$ACME_EMAIL}

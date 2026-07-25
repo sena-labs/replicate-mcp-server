@@ -1,13 +1,12 @@
-# Isolated public deployment for replicate-mcp.sena-labs.dev.
+# Isolated public deployment for a single MCP hostname ($MCP_DOMAIN).
 #
 # Two containers on the existing `proxy` network:
 #   - replicate-mcp:  the MCP server (HTTP transport, multi-tenant — each user
 #                     brings their own Replicate token; NO server-wide token).
 #   - replicate-mcp-caddy: a DEDICATED Caddy reverse proxy that binds ONLY the
 #                     public IP (not 0.0.0.0), serving just this one hostname
-#                     with automatic Let's Encrypt. The host's existing
-#                     nginx-proxy-manager (bound to the Tailscale IP) is left
-#                     completely untouched and stays private.
+#                     with automatic Let's Encrypt. Any other reverse proxy on
+#                     the host, bound to a different address, is left untouched.
 #
 # Config comes from deploy/.env (gitignored): PUBLIC_IP, MCP_DOMAIN, ACME_EMAIL.
 name: replicate-mcp
@@ -34,8 +33,9 @@ services:
     restart: unless-stopped
     depends_on: [replicate-mcp]
     networks: [proxy]
-    # Bind the PUBLIC IP only — avoids colliding with nginx-proxy-manager, which
-    # publishes 80/443 on the Tailscale IP.
+    # Bind the PUBLIC IP only (not 0.0.0.0) — avoids colliding with any other
+    # reverse proxy on the host that already publishes 80/443 on a different
+    # address.
     ports:
       - "${PUBLIC_IP}:80:80"
       - "${PUBLIC_IP}:443:443"

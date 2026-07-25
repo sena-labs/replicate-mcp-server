@@ -17,11 +17,11 @@ before filing a report.
 
 **Do not open a public issue for security problems.**
 
-Report privately through GitHub Security Advisories:
+Report privately, either way:
 
-1. Go to the repository's **Security** tab →
-   [**Report a vulnerability**](https://github.com/sena-labs/replicate-mcp-server/security/advisories/new).
-2. Describe the issue with enough detail to reproduce it.
+1. **GitHub Security Advisories** (preferred) — the repository's **Security**
+   tab → [**Report a vulnerability**](https://github.com/sena-labs/replicate-mcp-server/security/advisories/new).
+2. **Email** — [ivan.sena@sena-labs.dev](mailto:ivan.sena@sena-labs.dev).
 
 Please include:
 
@@ -29,6 +29,8 @@ Please include:
 - Transport in use (stdio or HTTP/SSE) and relevant configuration.
 - Step-by-step reproduction, proof-of-concept, or a failing request.
 - Impact assessment (what an attacker can read, write, or trigger).
+
+A proof of concept helps but is not required to report.
 
 ### Response targets
 
@@ -55,7 +57,9 @@ behalf of an MCP client. Keep the following in mind.
 - Tokens grant full access to your Replicate account (billing included). Treat
   them as secrets, scope them where possible, and rotate any token that may have
   leaked.
-- The process holds tokens in memory only; it does not persist them to disk.
+- The process holds tokens in memory only; it does not persist them to disk, and
+  never writes a token value to a log. Log records carry counts and booleans
+  (`token_present`, `token_count`) only.
 
 ### Transports
 
@@ -63,7 +67,27 @@ behalf of an MCP client. Keep the following in mind.
   launches it.
 - **HTTP/SSE** exposes a network endpoint. Do **not** expose it to untrusted
   networks without your own authentication, TLS termination, and rate limiting
-  in front of it. Bind to `localhost` unless you have deliberately secured it.
+  in front of it. It binds `127.0.0.1` unless you pass `--host`; keep it that way
+  unless you have deliberately secured it.
+- When `--api-key` is set, the comparison is constant-time
+  (`crypto.timingSafeEqual`).
+- In multi-tenant/hosted mode the server carries no token of its own — each
+  caller supplies one per request, preferably via the `x-replicate-api-token`
+  header rather than the query-param fallback, so it stays out of access logs.
+
+### In scope
+
+A break in any of the following is a valid report:
+
+- Leaking a caller's Replicate API token — through logs, error messages, tool
+  output, or responses returned to the MCP client.
+- Bypassing the host allowlist that restricts outbound fetches and downloads to
+  Replicate hosts (SSRF). The allowlist is re-checked after every redirect.
+- Path traversal or arbitrary write via download directories or inferred
+  filenames.
+- Authentication bypass on the HTTP transport when `--api-key` is set.
+- Webhook signature or token verification bypass.
+- Cross-tenant token or data leakage in multi-tenant HTTP mode.
 
 ### Out of scope
 
@@ -73,6 +97,7 @@ behalf of an MCP client. Keep the following in mind.
   or the environment the server runs in.
 - Missing hardening on an HTTP endpoint that the operator intentionally exposed
   without the recommended controls above.
+- Cost or quota consumption caused by your own token being used as configured.
 
 ## Dependencies
 

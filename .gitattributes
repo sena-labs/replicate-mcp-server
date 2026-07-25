@@ -1,0 +1,18 @@
+# Normalize every text file to LF inside the repository, whatever platform the
+# contributor is on. Without this, a CRLF checkout shows up as a whole-file
+# diff on every tracked source file.
+* text=auto eol=lf
+
+# Shell scripts must stay LF even when checked out on Windows.
+*.sh text eol=lf
+
+# Binary assets — never line-ending-converted, never diffed as text.
+*.png binary
+*.jpg binary
+*.woff2 binary
+*.mcpb binary
+*.db binary
+
+# Generated / vendored files: keep them out of diff noise and language stats.
+package-lock.json -diff linguist-generated
+THIRD_PARTY_LICENSES.md linguist-generated
