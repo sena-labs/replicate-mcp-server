@@ -4,6 +4,18 @@ on:
   push:
     branches: [main]
   pull_request:
+  # `npm audit` resolves against a live advisory database, so the Security
+  # audit job below is only as current as its last run. On push/PR alone,
+  # main is never re-evaluated after it lands: a commit that passed the
+  # gate in July is not necessarily passing today, and nothing re-runs to
+  # say so. The weekly cron closes that gap.
+  schedule:
+    # Weekly Monday 07:23 UTC. Deliberately off the hour — GitHub delays
+    # scheduled runs during the high-load window at the top of each hour.
+    - cron: '23 7 * * 1'
+  # On-demand re-evaluation, e.g. to check main against today's advisories
+  # without waiting for the cron.
+  workflow_dispatch:
 
 # Least privilege: CI only ever reads the repo. Overrides whatever the
 # repository-wide default GITHUB_TOKEN scope is set to.
