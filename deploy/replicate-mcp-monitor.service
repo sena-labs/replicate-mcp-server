@@ -1,0 +1,17 @@
+[Unit]
+Description=Replicate MCP HTTPS, container and credential-log monitor
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /usr/local/lib/replicate-mcp-monitor/monitor_hosted.py
+StateDirectory=replicate-mcp-monitor
+StateDirectoryMode=0700
+EnvironmentFile=-/etc/replicate-mcp-monitor.env
+UMask=0077
+TimeoutStartSec=120
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true

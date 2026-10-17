@@ -44,6 +44,34 @@ All host-specific values (`PUBLIC_IP`, `MCP_DOMAIN`, `ACME_EMAIL`) live in
 `deploy/.env`, which is gitignored. `deploy/.env.example` ships placeholders
 only.
 
+## Continuous monitoring (systemd host)
+
+The optional host-side timer runs every five minutes and after boot. It checks
+HTTPS health, container state/restart changes, stack overflows and credential
+patterns in recent application/Caddy logs. It records only counters and state,
+never raw log payloads or credentials. A failed check exits nonzero and produces
+an `alert` event in the systemd journal; a subsequent healthy check records
+`recovered`. No external notification channel is configured automatically.
+
+```bash
+sudo install -d -m 755 /usr/local/lib/replicate-mcp-monitor
+sudo install -m 644 scripts/monitor_hosted.py /usr/local/lib/replicate-mcp-monitor/
+sudo install -m 644 deploy/replicate-mcp-monitor.service deploy/replicate-mcp-monitor.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now replicate-mcp-monitor.timer
+sudo systemctl start replicate-mcp-monitor.service
+sudo systemctl status replicate-mcp-monitor.timer
+sudo journalctl -u replicate-mcp-monitor.service -n 10 --no-pager
+sudo cat /var/lib/replicate-mcp-monitor/state.json
+```
+
+Defaults target `replicate-mcp.sena-labs.dev` and containers `replicate-mcp` /
+`replicate-mcp-caddy`. Other hosts can set `REPLICATE_MONITOR_URL` (health URL)
+and `REPLICATE_MONITOR_CONTAINERS` (comma-separated names) in
+`/etc/replicate-mcp-monitor.env`. The service needs host Docker access; do not
+mount the Docker socket into the public MCP container. An outage exceeding
+15 minutes is explicitly reported as a monitoring gap; log catch-up is bounded.
+
 ## Prerequisites (one-time, manual)
 
 1. **DNS** — at your DNS provider, add an `A` record pointing your chosen

@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Replicate MCP monitoring every five minutes
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=5min
+AccuracySec=10s
+Unit=replicate-mcp-monitor.service
+
+[Install]
+WantedBy=timers.target

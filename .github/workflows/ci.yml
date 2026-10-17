@@ -45,6 +45,9 @@ jobs:
       - name: Build and test
         run: npm test
 
+      - name: Test hosted monitoring checks
+        run: python3 -m unittest discover -s test/ops
+
   security:
     name: Security audit
     runs-on: ubuntu-latest
