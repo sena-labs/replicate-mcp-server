@@ -2,9 +2,7 @@
  * HTTP/SSE transport runner for the MCP server.
  *
  * Hosts the MCP server on a configurable port (default 8088) using the
- * official `StreamableHTTPServerTransport`. Supports both:
- *   - Stateful sessions (one transport per Mcp-Session-Id header), and
- *   - Stateless mode (transport per request, no session)
+ * official `StreamableHTTPServerTransport` with bounded stateful sessions.
  *
  * Optional Bearer-token auth via `--api-key` / `HTTP_API_KEY` env var.
  * When the api key is absent the server runs unauthenticated and must
@@ -18,6 +16,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { logger } from "./logger.js";
 import { requestContext, type RequestContext } from "./request-context.js";
+import { DEFAULT_HTTP_LIMITS, HttpRateLimiter, clientIpResolver, validateHttpLimits, type HttpLimits } from "./http-limits.js";
 
 export interface HttpServerOptions {
   /** Factory that builds a fresh McpServer. Called once per session — a single
@@ -26,6 +25,9 @@ export interface HttpServerOptions {
   port: number;
   host: string;
   apiKey?: string;
+  limits?: Partial<HttpLimits>;
+  /** Immediate proxy peers only. They must overwrite X-Real-IP. Default: none. */
+  trustedProxyCidrs?: string[];
   /** Optional callback that returns extra fields merged into the /health
    *  response. Called on every health check — keep it cheap. */
   statusCallback?: () => Record<string, unknown>;
@@ -34,10 +36,57 @@ export interface HttpServerOptions {
 export async function startHttpTransport(
   opts: HttpServerOptions,
 ): Promise<import("node:http").Server> {
-  const transports = new Map<string, StreamableHTTPServerTransport>();
+  const limits = validateHttpLimits({ ...DEFAULT_HTTP_LIMITS, ...opts.limits });
+  const limiter = new HttpRateLimiter(limits);
+  const resolveClientIp = clientIpResolver(opts.trustedProxyCidrs);
+  interface Session {
+    id: string;
+    ip: string;
+    transport: StreamableHTTPServerTransport;
+    initialized: boolean;
+    activePosts: number;
+    lastActivity: number;
+  }
+  const sessions = new Map<string, Session>();
+  const sessionsByIp = new Map<string, number>();
+  const pinPost = (session: Session, res: ServerResponse) => {
+    session.activePosts++;
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      session.activePosts--;
+      session.lastActivity = performance.now();
+    };
+    res.once("finish", finish);
+    res.once("close", finish);
+  };
+  const release = (session: Session) => {
+    if (!sessions.delete(session.id)) return;
+    const count = (sessionsByIp.get(session.ip) ?? 1) - 1;
+    if (count) sessionsByIp.set(session.ip, count);
+    else sessionsByIp.delete(session.ip);
+  };
+  const retire = (session: Session) => {
+    release(session);
+    void session.transport.close().catch(() => logger.warn("http_session_close_failed"));
+  };
+  const sweep = () => {
+    const cutoff = performance.now() - limits.sessionIdleMs;
+    for (const session of sessions.values()) {
+      // Open GET notification streams are not running tool operations.
+      if (session.activePosts === 0 && session.lastActivity <= cutoff) retire(session);
+    }
+  };
 
   const http = createServer(async (req, res) => {
     try {
+      const ip = resolveClientIp(req);
+      const retryAfter = limiter.take(ip);
+      if (retryAfter) {
+        rejectQuota(res, retryAfter, "Request rate limit exceeded");
+        return;
+      }
       // Health endpoint — useful for load balancers / liveness probes.
       if (req.method === "GET" && (req.url === "/health" || req.url === "/healthz")) {
         const extra = opts.statusCallback?.() ?? {};
@@ -59,7 +108,10 @@ export async function startHttpTransport(
 
       const body = await readJsonBody(req);
       const sessionId = pickSessionId(req);
-      let transport = sessionId ? transports.get(sessionId) : undefined;
+      sweep();
+      let session = sessionId ? sessions.get(sessionId) : undefined;
+      let transport = session?.initialized ? session.transport : undefined;
+      let created = false;
 
       if (sessionId && !transport) {
         respondJson(res, 404, {
@@ -77,6 +129,10 @@ export async function startHttpTransport(
           });
           return;
         }
+        if (sessions.size >= limits.maxSessions || (sessionsByIp.get(ip) ?? 0) >= limits.sessionsPerIp) {
+          rejectQuota(res, 30, "Too many active sessions");
+          return;
+        }
         // New session — generate an id, build a dedicated server, and stand up
         // a fresh transport. Each session gets its OWN McpServer because one
         // server can only be connected to a single transport at a time.
@@ -84,16 +140,27 @@ export async function startHttpTransport(
         transport = new StreamableHTTPServerTransport({
           sessionIdGenerator: () => newId,
           onsessioninitialized: () => {
-            transports.set(newId, transport!);
+            session!.initialized = true;
           },
         });
-        const sessionServer = opts.createServer();
+        session = { id: newId, ip, transport, initialized: false, activePosts: 0, lastActivity: performance.now() };
+        // Reserve before any await, including pending initialization, to prevent
+        // concurrent initializers from oversubscribing the session cap.
+        sessions.set(newId, session);
+        sessionsByIp.set(ip, (sessionsByIp.get(ip) ?? 0) + 1);
+        created = true;
+        pinPost(session, res);
         // The SDK clears its server connection after this callback returns.
         // Calling server.close() here re-enters transport.close() recursively.
         transport.onclose = () => {
-          transports.delete(newId);
+          release(session!);
         };
-        await sessionServer.connect(transport);
+        try {
+          await opts.createServer().connect(transport);
+        } catch (err) {
+          retire(session);
+          throw err;
+        }
         // The SDK transport sets the Mcp-Session-Id response header on the
         // initialize response automatically; subsequent calls reuse it.
       }
@@ -101,7 +168,14 @@ export async function startHttpTransport(
       // Multi-tenant: carry the caller's own Replicate token (from the
       // gateway/Smithery per-user session config) for this request only.
       const ctx = parseSessionConfig(url, req.headers);
-      await requestContext.run(ctx, () => transport!.handleRequest(req, res, body));
+      const active = session!;
+      active.lastActivity = performance.now();
+      if (!created && req.method === "POST") pinPost(active, res);
+      try {
+        await requestContext.run(ctx, () => transport!.handleRequest(req, res, body));
+      } finally {
+        if (created && !active.initialized) retire(active);
+      }
     } catch (err) {
       logger.error("http_request_failed", {
         message: err instanceof Error ? err.message : String(err),
@@ -112,6 +186,13 @@ export async function startHttpTransport(
         respondJson(res, 500, { error: "internal_error" });
       }
     }
+  });
+
+  const cleanup = setInterval(sweep, Math.min(60_000, limits.sessionIdleMs));
+  cleanup.unref();
+  http.once("close", () => {
+    clearInterval(cleanup);
+    for (const session of sessions.values()) retire(session);
   });
 
   await new Promise<void>((resolve, reject) => {
@@ -126,6 +207,8 @@ export async function startHttpTransport(
     host: opts.host,
     port: opts.port,
     auth: opts.apiKey ? "bearer" : "none",
+    limits,
+    trusted_proxy_count: opts.trustedProxyCidrs?.length ?? 0,
   });
   // Visible boot banner so operators see it in the terminal.
   console.error(
@@ -214,4 +297,10 @@ function respondJson(res: ServerResponse, status: number, body: unknown): void {
   res.statusCode = status;
   res.setHeader("Content-Type", "application/json");
   res.end(JSON.stringify(body));
+}
+
+function rejectQuota(res: ServerResponse, seconds: number, message: string): void {
+  res.setHeader("Retry-After", String(seconds));
+  res.setHeader("Cache-Control", "no-store");
+  respondJson(res, 429, { jsonrpc: "2.0", id: null, error: { code: -32000, message } });
 }

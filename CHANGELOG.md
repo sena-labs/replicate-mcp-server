@@ -5,6 +5,13 @@ All notable changes to `replicate-mcp-server`. Format roughly follows
 
 ## [Unreleased]
 
+### Added
+
+- Configurable HTTP per-IP/global token buckets with 429/Retry-After responses,
+  bounded session admission and idle-session expiry that preserves active POSTs.
+- Explicit trusted-proxy IP/CIDR handling for X-Real-IP; Compose pins Caddy's
+  peer address via the required MCP_CADDY_PROXY_IP deployment setting.
+
 ### Fixed
 
 - HTTP session closure no longer calls `server.close()` from `transport.onclose`,

@@ -44,6 +44,50 @@ All host-specific values (`PUBLIC_IP`, `MCP_DOMAIN`, `ACME_EMAIL`) live in
 `deploy/.env`, which is gitignored. `deploy/.env.example` ships placeholders
 only.
 
+## HTTP admission limits
+
+HTTP mode has process-local token buckets: a sustained 120 requests/minute per
+IP with burst 30, and 1,200/minute globally with burst 100. All HTTP requests,
+including discovery and health checks, pass admission before body parsing or
+tool execution. Excess requests receive HTTP 429, `Retry-After` in seconds and
+`Cache-Control: no-store`. Tokens refill continuously; these are not fixed
+calendar-minute windows. Per-IP bucket memory is bounded; excess new source
+addresses fail closed until space is reclaimed.
+
+Sessions are capped at 20 per initiating IP and 200 total, including pending
+initializations. DELETE releases capacity. Sessions idle for 30 minutes expire;
+in-flight POST responses pin their sessions until completion. An idle GET
+notification stream does not pin a session forever. Expired IDs return 404.
+
+| Environment variable | Default |
+|---|---:|
+| `HTTP_RATE_LIMIT_PER_IP` | `120` |
+| `HTTP_RATE_LIMIT_BURST_PER_IP` | `30` |
+| `HTTP_RATE_LIMIT_GLOBAL` | `1200` |
+| `HTTP_RATE_LIMIT_BURST_GLOBAL` | `100` |
+| `HTTP_MAX_SESSIONS_PER_IP` | `20` |
+| `HTTP_MAX_SESSIONS` | `200` |
+| `HTTP_SESSION_IDLE_TIMEOUT_MS` | `1800000` |
+| `HTTP_TRUSTED_PROXY_CIDRS` | empty (trust no forwarded identity) |
+
+Numeric settings must be positive integers; invalid settings fail startup.
+By default the socket peer is the quota identity. `X-Forwarded-For` is never
+used. `X-Real-IP` is accepted only when the immediate socket peer matches the
+explicit IP/CIDR allowlist, and the header itself is one valid IP address.
+The supplied Caddyfile overwrites `X-Real-IP` with its actual client peer.
+
+For Compose deployments, set `MCP_CADDY_PROXY_IP` in `deploy/.env` to an unused
+IPv4 address inside the external `proxy` Docker network. Compose assigns it to
+Caddy and trusts only that address (`/32`) on MCP. This new setting is required
+before deploying the updated Compose file. Do not substitute an internet-wide
+trusted CIDR or trust forwarded headers from arbitrary peers. If your ingress
+has another proxy in front of Caddy, configure that topology explicitly; this
+example assumes clients connect directly to Caddy.
+
+These are HTTP/session quotas, not prediction-count or billing quotas. Batch
+and pipeline concurrency settings remain per job. Each server process has its
+own counters; multiple replicas would need a shared admission layer.
+
 ## Continuous monitoring (systemd host)
 
 The optional host-side timer runs every five minutes and after boot. It checks

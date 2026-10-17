@@ -26,13 +26,16 @@ services:
     # per-user token fail with a clear error; tools/prompts still list for scans.
     environment:
       LOG_LEVEL: "info"
+      HTTP_TRUSTED_PROXY_CIDRS: "${MCP_CADDY_PROXY_IP:?Set a fixed unused Caddy address on the proxy network}/32"
 
   replicate-mcp-caddy:
     image: caddy:2-alpine
     container_name: replicate-mcp-caddy
     restart: unless-stopped
     depends_on: [replicate-mcp]
-    networks: [proxy]
+    networks:
+      proxy:
+        ipv4_address: "${MCP_CADDY_PROXY_IP:?Set a fixed unused Caddy address on the proxy network}"
     # Bind the PUBLIC IP only (not 0.0.0.0) — avoids colliding with any other
     # reverse proxy on the host that already publishes 80/443 on a different
     # address.

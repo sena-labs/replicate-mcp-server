@@ -13,7 +13,10 @@
 }
 
 {$MCP_DOMAIN} {
-	reverse_proxy replicate-mcp:8088
+	reverse_proxy replicate-mcp:8088 {
+		# Overwrite client-supplied values; MCP trusts only this proxy's peer IP.
+		header_up X-Real-IP {remote_host}
+	}
 
 	# Don't advertise the server software.
 	header -Server

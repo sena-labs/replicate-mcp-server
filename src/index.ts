@@ -38,6 +38,7 @@ import { registerMediaTools } from "./tools/media.js";
 import { registerManagementTools } from "./tools/management.js";
 import { registerOrchestrationTools } from "./tools/orchestration.js";
 import { registerAccountTools } from "./tools/account.js";
+import { httpLimitsFromEnv } from "./http-limits.js";
 import { registerTrainingTools } from "./tools/training.js";
 import { registerDeploymentTools } from "./tools/deployment.js";
 import { registerPrompts } from "./prompts.js";
@@ -153,6 +154,8 @@ async function main(): Promise<void> {
       port: args.httpPort,
       host: args.httpHost,
       apiKey: rawApiKey,
+      limits: httpLimitsFromEnv(),
+      trustedProxyCidrs: (process.env["HTTP_TRUSTED_PROXY_CIDRS"] ?? "").split(",").map(s => s.trim()).filter(Boolean),
       statusCallback: () => ({
         webhook_enabled: webhookEnabled(),
         token_pool_size: getPoolSize(),
