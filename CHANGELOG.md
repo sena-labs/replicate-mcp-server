@@ -3,6 +3,18 @@
 All notable changes to `replicate-mcp-server`. Format roughly follows
 [Keep a Changelog](https://keepachangelog.com/) with [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+
+- HTTP session closure no longer calls `server.close()` from `transport.onclose`,
+  preventing recursive shutdown with older MCP SDK transports.
+- Only initialization requests allocate sessions; unknown/stale session IDs
+  return 404 instead of allocating a replacement server with a caller-chosen ID.
+- Caddy access and runtime logging remove request headers and URI query strings;
+  application HTTP error logging also omits query strings.
+- Refresh locked dependencies to resolve the reported security advisories.
+
 ## [3.2.3] — 2026-06-22
 
 ### Fixed

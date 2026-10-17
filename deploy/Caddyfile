@@ -2,6 +2,14 @@
 # Domain + ACME email come from the environment (set in deploy/.env).
 {
 	email {$ACME_EMAIL}
+	# Runtime warnings/errors also contain request objects, outside access logs.
+	log default {
+		format filter {
+			request>headers delete
+			request>uri regexp "[?].*$" ""
+			wrap json
+		}
+	}
 }
 
 {$MCP_DOMAIN} {
@@ -10,11 +18,13 @@
 	# Don't advertise the server software.
 	header -Server
 
-	# Access log WITHOUT the query string, so a token passed as a query-param
-	# fallback never lands in logs (the preferred path is the
-	# x-replicate-api-token header, which Caddy does not log).
+	# BYOK is public. Never retain request headers or query credentials.
 	log {
 		output stdout
-		format json
+		format filter {
+			request>headers delete
+			request>uri regexp "[?].*$" ""
+			wrap json
+		}
 	}
 }

@@ -15,6 +15,7 @@ import { createServer, IncomingMessage, ServerResponse } from "node:http";
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { logger } from "./logger.js";
 import { requestContext, type RequestContext } from "./request-context.js";
 
@@ -60,23 +61,39 @@ export async function startHttpTransport(
       const sessionId = pickSessionId(req);
       let transport = sessionId ? transports.get(sessionId) : undefined;
 
+      if (sessionId && !transport) {
+        respondJson(res, 404, {
+          jsonrpc: "2.0", id: null,
+          error: { code: -32001, message: "Session not found; initialize a new session" },
+        });
+        return;
+      }
+
       if (!transport) {
+        if (req.method !== "POST" || !isInitializeRequest(body)) {
+          respondJson(res, 400, {
+            jsonrpc: "2.0", id: null,
+            error: { code: -32000, message: "Session ID required; initialize first" },
+          });
+          return;
+        }
         // New session — generate an id, build a dedicated server, and stand up
         // a fresh transport. Each session gets its OWN McpServer because one
         // server can only be connected to a single transport at a time.
-        const newId = sessionId ?? randomUUID();
+        const newId = randomUUID();
         transport = new StreamableHTTPServerTransport({
           sessionIdGenerator: () => newId,
+          onsessioninitialized: () => {
+            transports.set(newId, transport!);
+          },
         });
         const sessionServer = opts.createServer();
-        // Remove from map + close the per-session server when the session ends,
-        // so neither the map nor server instances grow without bound.
+        // The SDK clears its server connection after this callback returns.
+        // Calling server.close() here re-enters transport.close() recursively.
         transport.onclose = () => {
           transports.delete(newId);
-          void sessionServer.close();
         };
         await sessionServer.connect(transport);
-        transports.set(newId, transport);
         // The SDK transport sets the Mcp-Session-Id response header on the
         // initialize response automatically; subsequent calls reuse it.
       }
@@ -88,7 +105,7 @@ export async function startHttpTransport(
     } catch (err) {
       logger.error("http_request_failed", {
         message: err instanceof Error ? err.message : String(err),
-        url: req.url,
+        url: req.url?.split("?", 1)[0],
         method: req.method,
       });
       if (!res.headersSent) {

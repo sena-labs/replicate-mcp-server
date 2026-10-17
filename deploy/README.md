@@ -9,6 +9,37 @@ The server runs **multi-tenant**: it carries no Replicate token of its own —
 each user supplies their own via the session config (`x-replicate-api-token`
 header, or `replicate_api_token` query param).
 
+This is an intentionally public BYOK endpoint, not an authenticated private
+gateway. A supplied Replicate token is checked by Replicate when an API operation
+uses it; its presence in a request does not prove a successful generation. Never
+configure `REPLICATE_API_TOKEN` or `REPLICATE_API_TOKEN_POOL` on a public instance.
+For private installations, set `HTTP_API_KEY` and send it as `Authorization: Bearer`.
+
+## Credential-safe logging
+
+The supplied Caddyfile filters **both access and runtime logs**: request headers
+are removed and URI query strings are stripped before JSON encoding. Ordinary
+`format json` does not hide `X-Replicate-Api-Token`; Caddy's built-in sensitive
+header list does not cover this custom header. Header transport alone is not a
+redaction policy. Application HTTP error logs retain only the URI path.
+
+When updating an existing host, merge these filters into its current configuration
+and validate/reload Caddy. Do not replace a host-specific Caddyfile containing
+other services with this single-host example. Send a dummy header/query canary
+and verify it is absent from access **and runtime** logs.
+
+If an older configuration logged tokens, first stop further logging and preserve
+evidence under restricted administrator access before any cleanup or container
+recreation. Establish which credentials were involved and who could access the
+logs; internal retention does not itself prove third-party disclosure or abuse.
+Consider precautionary rotation of still-valid affected credentials at
+https://replicate.com/account/api-tokens, coordinating with their owners as
+appropriate. Do not assume every supplied header was a valid provider credential.
+Once evidence-retention decisions are made, sanitize operational archives.
+Recreating the Caddy container removes its Docker-managed log history (including
+rotated files); external collectors and backups require separate review. Never
+edit active Docker log files behind the logging driver.
+
 All host-specific values (`PUBLIC_IP`, `MCP_DOMAIN`, `ACME_EMAIL`) live in
 `deploy/.env`, which is gitignored. `deploy/.env.example` ships placeholders
 only.
