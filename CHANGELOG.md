@@ -3,7 +3,7 @@
 All notable changes to `replicate-mcp-server`. Format roughly follows
 [Keep a Changelog](https://keepachangelog.com/) with [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [3.3.0] — 2026-10-17
 
 ### Added
 
@@ -11,6 +11,8 @@ All notable changes to `replicate-mcp-server`. Format roughly follows
   bounded session admission and idle-session expiry that preserves active POSTs.
 - Explicit trusted-proxy IP/CIDR handling for X-Real-IP; Compose pins Caddy's
   peer address via the required MCP_CADDY_PROXY_IP deployment setting.
+- Optional systemd monitoring for HTTPS health, container lifecycle and log
+  filtering checks, with counter-only state and journal alert/recovery events.
 
 ### Fixed
 
@@ -21,6 +23,17 @@ All notable changes to `replicate-mcp-server`. Format roughly follows
 - Caddy access and runtime logging remove request headers and URI query strings;
   application HTTP error logging also omits query strings.
 - Refresh locked dependencies to resolve the reported security advisories.
+
+### Updating
+
+- **npm / npx:** use `replicate-mcp-server@3.3.0`.
+- **Claude Desktop:** install the `3.3.0` MCPB bundle.
+- **Compose:** before applying the updated configuration, set
+  `MCP_CADDY_PROXY_IP` to an unused IPv4 address in the existing Docker `proxy`
+  network. This pins Caddy's address for trusted client-IP handling. Review
+  `deploy/README.md` when merging the template into an existing installation.
+- **HTTP mode:** default quotas now apply to requests and sessions. Operators
+  can adjust the documented `HTTP_*` environment settings to their workload.
 
 ## [3.2.3] — 2026-06-22
 

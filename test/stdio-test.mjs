@@ -9,7 +9,9 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
-const serverPath = resolve(__dirname, "..", "dist", "index.js");
+const serverPath = process.argv[2]
+  ? resolve(process.argv[2])
+  : resolve(__dirname, "..", "dist", "index.js");
 
 const REQUEST_TIMEOUT_MS = 15_000;
 
