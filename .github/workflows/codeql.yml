@@ -1,0 +1,45 @@
+name: CodeQL
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # CodeQL query packs gain new checks between releases, so main is re-scanned
+  # weekly even when no code changed. Off the hour for the same reason as CI.
+  schedule:
+    - cron: '41 6 * * 1'
+  workflow_dispatch:
+
+# Least privilege: read the code, upload results to code scanning.
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        # javascript-typescript covers src/ and the .mjs scripts and tests;
+        # python covers the hosted-monitoring and log-redaction scripts;
+        # actions checks the workflow files themselves.
+        language: [javascript-typescript, python, actions]
+    steps:
+      - uses: actions/checkout@v4
+
+      # Interpreted languages need no build step (build-mode: none).
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+          queries: security-extended
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:${{ matrix.language }}

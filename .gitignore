@@ -26,6 +26,10 @@ dist/
 # TypeScript incremental build info
 *.tsbuildinfo
 
+# Python bytecode (scripts/ and test/ops/ run under python3 -m unittest)
+__pycache__/
+*.py[cod]
+
 # Runtime artifacts
 *.db
 mcpo*.json
