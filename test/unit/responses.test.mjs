@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { writeFileSync, unlinkSync } from "node:fs";
+import { writeFileSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -175,49 +175,48 @@ test("formatPrediction URL fallback — text includes the URL", async () => {
 // buildInlineImageContent
 // ---------------------------------------------------------------------------
 
-test("buildInlineImageContent — returns one image content item for a valid PNG", async () => {
-  const tmpPath = join(tmpdir(), `responses-test-${Date.now()}.png`);
-  writeFileSync(tmpPath, Buffer.from(TINY_PNG_B64, "base64"));
+// A private mkdtemp directory (mode 0700) instead of a predictable name in the
+// shared temp dir, so another local user cannot pre-create or symlink the path.
+async function withTempFile(name, contents, fn) {
+  const dir = mkdtempSync(join(tmpdir(), "responses-test-"));
+  const tmpPath = join(dir, name);
+  writeFileSync(tmpPath, contents);
   try {
+    return await fn(tmpPath);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+const TINY_PNG = Buffer.from(TINY_PNG_B64, "base64");
+
+test("buildInlineImageContent — returns one image content item for a valid PNG", async () => {
+  await withTempFile("image.png", TINY_PNG, async (tmpPath) => {
     const items = await buildInlineImageContent([tmpPath]);
     assert.equal(items.length, 1);
-  } finally {
-    unlinkSync(tmpPath);
-  }
+  });
 });
 
 test("buildInlineImageContent — item type is 'image'", async () => {
-  const tmpPath = join(tmpdir(), `responses-test-${Date.now()}.png`);
-  writeFileSync(tmpPath, Buffer.from(TINY_PNG_B64, "base64"));
-  try {
+  await withTempFile("image.png", TINY_PNG, async (tmpPath) => {
     const items = await buildInlineImageContent([tmpPath]);
     assert.equal(items[0].type, "image");
-  } finally {
-    unlinkSync(tmpPath);
-  }
+  });
 });
 
 test("buildInlineImageContent — mimeType is 'image/png'", async () => {
-  const tmpPath = join(tmpdir(), `responses-test-${Date.now()}.png`);
-  writeFileSync(tmpPath, Buffer.from(TINY_PNG_B64, "base64"));
-  try {
+  await withTempFile("image.png", TINY_PNG, async (tmpPath) => {
     const items = await buildInlineImageContent([tmpPath]);
     assert.equal(items[0].mimeType, "image/png");
-  } finally {
-    unlinkSync(tmpPath);
-  }
+  });
 });
 
 test("buildInlineImageContent — data is a non-empty base64 string", async () => {
-  const tmpPath = join(tmpdir(), `responses-test-${Date.now()}.png`);
-  writeFileSync(tmpPath, Buffer.from(TINY_PNG_B64, "base64"));
-  try {
+  await withTempFile("image.png", TINY_PNG, async (tmpPath) => {
     const items = await buildInlineImageContent([tmpPath]);
     assert.ok(typeof items[0].data === "string");
     assert.ok(items[0].data.length > 0);
-  } finally {
-    unlinkSync(tmpPath);
-  }
+  });
 });
 
 test("buildInlineImageContent — returns empty array for non-existent file", async () => {
@@ -226,12 +225,8 @@ test("buildInlineImageContent — returns empty array for non-existent file", as
 });
 
 test("buildInlineImageContent — returns empty array for unsupported extension", async () => {
-  const tmpPath = join(tmpdir(), `responses-test-${Date.now()}.txt`);
-  writeFileSync(tmpPath, "not an image");
-  try {
+  await withTempFile("not-an-image.txt", "not an image", async (tmpPath) => {
     const items = await buildInlineImageContent([tmpPath]);
     assert.equal(items.length, 0);
-  } finally {
-    unlinkSync(tmpPath);
-  }
+  });
 });
