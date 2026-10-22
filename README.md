@@ -4,7 +4,7 @@
   <img src="assets/banner.png" alt="Replicate MCP Server — universal MCP for the full Replicate catalog" width="100%">
 </p>
 
-[![smithery badge](https://smithery.ai/badge/sena-labs/replicate-mcp-server?refresh=20260602)](https://smithery.ai/servers/sena-labs/replicate-mcp-server)
+[![LightNow capabilities](https://lightnow.ai/badge/io.github.sena-labs/replicate-mcp-server)](https://lightnow.ai/servers/io.github.sena-labs/replicate-mcp-server)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20this%20project-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/senalabs)
 
 A universal, cross-platform [MCP](https://modelcontextprotocol.io) server that gives **any MCP client** — Claude Desktop, the claude.ai web app (Connectors), Cursor, Cline / Continue in VS Code, or your own application — native access to the full [Replicate](https://replicate.com) catalog: image generation, video, music, speech, upscaling, segmentation, LLMs, voice cloning, 3D, lipsync — anything Replicate hosts.
@@ -25,7 +25,7 @@ Once connected to your MCP client, you can simply ask:
 
 ## Install
 
-**Fastest — one-click via [Smithery](https://smithery.ai/server/sena-labs/replicate-mcp-server)** ([![smithery badge](https://smithery.ai/badge/sena-labs/replicate-mcp-server?refresh=20260603)](https://smithery.ai/servers/sena-labs/replicate-mcp-server)): open the [server page](https://smithery.ai/server/sena-labs/replicate-mcp-server) and copy the **Install** snippet for your client (Claude, Cursor, VS Code, Cline, Windsurf, …). It wires the server in and prompts for your Replicate token. _(Routes through Smithery's hosted gateway — easiest, zero local setup.)_
+**Fastest — one-click via [Smithery](https://smithery.ai/server/sena-labs/replicate-mcp-server)** ([Smithery](https://smithery.ai/servers/sena-labs/replicate-mcp-server)): open the [server page](https://smithery.ai/server/sena-labs/replicate-mcp-server) and copy the **Install** snippet for your client (Claude, Cursor, VS Code, Cline, Windsurf, …). It wires the server in and prompts for your Replicate token. _(Routes through Smithery's hosted gateway — easiest, zero local setup.)_
 
 **Token-private — npm + stdio** (your Replicate token never leaves your machine):
 
