@@ -37,13 +37,13 @@ test("RecommendModelInputSchema — rejects unknown priority", () => {
 test("RecommendModelInputSchema — rejects max_cost_usd <= 0", () => {
   assert.throws(
     () => RecommendModelInputSchema.parse({ category: "image", max_cost_usd: 0 }),
-    /greater than 0/,
+    />0/,
   );
 });
 
 test("RecommendModelInputSchema — rejects duration_seconds > 600", () => {
   assert.throws(
     () => RecommendModelInputSchema.parse({ category: "video", duration_seconds: 601 }),
-    /less than or equal to 600/,
+    /<=600/,
   );
 });

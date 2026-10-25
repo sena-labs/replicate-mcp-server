@@ -3,6 +3,24 @@
 All notable changes to `replicate-mcp-server`. Format roughly follows
 [Keep a Changelog](https://keepachangelog.com/) with [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Security
+
+- Upgrade `zod` 3 → 4.6.7 to clear GHSA-mrhx-c7xc-m3w5 (high: memory exhaustion
+  on oversized arrays; no fix exists in the 3.x line). Lockfile refresh clears
+  GHSA-27r3-jxmh-p828 (`body-parser`, high), four `fast-uri` advisories and
+  GHSA-5r4p-p66f-jhc7 (`hono`), all moderate. `npm audit` now reports 0.
+
+### Changed
+
+- Tools register their full object schemas instead of `.shape`, so the
+  published `inputSchema` keeps `additionalProperties: false` under zod 4 and
+  unknown arguments are rejected at the MCP layer, as before. Other published
+  schema differences: `extra_input`/`input` records declare
+  `propertyNames: {type: string}` and integer `seed` fields carry safe-integer
+  bounds. Validation error text now uses zod 4 wording.
+
 ## [3.3.0] — 2026-10-17
 
 ### Added

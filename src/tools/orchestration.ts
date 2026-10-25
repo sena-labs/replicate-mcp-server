@@ -58,7 +58,7 @@ Example — generate + upscale + remove background in parallel:
     { "id": "no_bg", "model": "lucataco/remove-bg", "input": { "image": "$gen.urls[0]" } }
   ]
   upscale and no_bg both depend on gen, run in parallel after gen completes.`,
-    inputSchema: PipelineStartInputSchema.shape,
+    inputSchema: PipelineStartInputSchema,
     annotations: {
       readOnlyHint: false,
       destructiveHint: false,
@@ -126,7 +126,7 @@ overall_status:
 Note: pipeline-level errors (cycle detected, unknown depends_on) are rejected at replicate_pipeline_start with an error response — they never produce a pollable pipeline.
 
 Tip: Poll every 10–30 seconds until overall_status is "completed" or "partial".`,
-    inputSchema: PipelineStatusInputSchema.shape,
+    inputSchema: PipelineStatusInputSchema,
     annotations: {
       readOnlyHint: true,
       destructiveHint: false,
@@ -215,7 +215,7 @@ Example:
   ]
   → Returns { job_id: "abc-123", total: 2, message: "..." }
   → Then poll: replicate_batch_status({ job_id: "abc-123" })`,
-    inputSchema: BatchStartInputSchema.shape,
+    inputSchema: BatchStartInputSchema,
     annotations: {
       readOnlyHint: false,
       destructiveHint: false,
@@ -272,7 +272,7 @@ overall_status:
   "partial"   — all done, at least one failed
 
 Tip: Poll every 10–30 seconds until overall_status is "completed" or "partial".`,
-    inputSchema: BatchStatusInputSchema.shape,
+    inputSchema: BatchStatusInputSchema,
     annotations: {
       readOnlyHint: true,
       destructiveHint: false,

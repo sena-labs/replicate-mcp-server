@@ -25,20 +25,20 @@ test("RefreshModelsInputSchema — accepts valid full input", () => {
 test("RefreshModelsInputSchema — rejects limit_per_category = 0", () => {
   assert.throws(
     () => RefreshModelsInputSchema.parse({ limit_per_category: 0 }),
-    /greater than or equal to 1/,
+    />=1/,
   );
 });
 
 test("RefreshModelsInputSchema — rejects limit_per_category > 20", () => {
   assert.throws(
     () => RefreshModelsInputSchema.parse({ limit_per_category: 21 }),
-    /less than or equal to 20/,
+    /<=20/,
   );
 });
 
 test("RefreshModelsInputSchema — rejects negative min_run_count", () => {
   assert.throws(
     () => RefreshModelsInputSchema.parse({ min_run_count: -1 }),
-    /greater than or equal to 0/,
+    />=0/,
   );
 });

@@ -10,8 +10,8 @@ const {
 test("ListDeploymentsInputSchema — default limit 20, bounds enforced", () => {
   assert.equal(ListDeploymentsInputSchema.parse({}).limit, 20);
   assert.equal(ListDeploymentsInputSchema.parse({ limit: 1 }).limit, 1);
-  assert.throws(() => ListDeploymentsInputSchema.parse({ limit: 0 }), /greater than or equal to 1/);
-  assert.throws(() => ListDeploymentsInputSchema.parse({ limit: 101 }), /less than or equal to 100/);
+  assert.throws(() => ListDeploymentsInputSchema.parse({ limit: 0 }), />=1/);
+  assert.throws(() => ListDeploymentsInputSchema.parse({ limit: 101 }), /<=100/);
 });
 
 test("GetDeploymentInputSchema — requires deployment", () => {
@@ -19,7 +19,7 @@ test("GetDeploymentInputSchema — requires deployment", () => {
     GetDeploymentInputSchema.parse({ deployment: "me/dep" }).deployment,
     "me/dep",
   );
-  assert.throws(() => GetDeploymentInputSchema.parse({ deployment: "" }), /at least 1/);
+  assert.throws(() => GetDeploymentInputSchema.parse({ deployment: "" }), />=1/);
 });
 
 test("RunDeploymentInputSchema — defaults (download true, input {})", () => {
