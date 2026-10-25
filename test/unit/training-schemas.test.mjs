@@ -31,7 +31,7 @@ test("CreateTrainingInputSchema — accepts inline version + input object", () =
 test("CreateTrainingInputSchema — rejects empty model", () => {
   assert.throws(
     () => CreateTrainingInputSchema.parse({ model: "", destination: "me/x" }),
-    /at least 1|Invalid/,
+    />=1/,
   );
 });
 
@@ -54,7 +54,7 @@ test("CreateTrainingInputSchema — rejects unknown keys (strict)", () => {
 
 test("GetTrainingInputSchema — requires training_id", () => {
   assert.equal(GetTrainingInputSchema.parse({ training_id: "t1" }).training_id, "t1");
-  assert.throws(() => GetTrainingInputSchema.parse({ training_id: "" }), /at least 1/);
+  assert.throws(() => GetTrainingInputSchema.parse({ training_id: "" }), />=1/);
 });
 
 test("CancelTrainingInputSchema — requires training_id", () => {
@@ -68,6 +68,6 @@ test("CancelTrainingInputSchema — requires training_id", () => {
 test("ListTrainingsInputSchema — default limit 10, bounds enforced", () => {
   assert.equal(ListTrainingsInputSchema.parse({}).limit, 10);
   assert.equal(ListTrainingsInputSchema.parse({ limit: 50 }).limit, 50);
-  assert.throws(() => ListTrainingsInputSchema.parse({ limit: 0 }), /greater than or equal to 1/);
-  assert.throws(() => ListTrainingsInputSchema.parse({ limit: 101 }), /less than or equal to 100/);
+  assert.throws(() => ListTrainingsInputSchema.parse({ limit: 0 }), />=1/);
+  assert.throws(() => ListTrainingsInputSchema.parse({ limit: 101 }), /<=100/);
 });

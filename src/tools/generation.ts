@@ -84,7 +84,7 @@ Examples:
 Error handling:
   - If REPLICATE_API_TOKEN is missing, returns an actionable error telling the user how to set it.
   - Invalid model IDs return Replicate's error message verbatim.`,
-    inputSchema: GenerateImageInputSchema.shape,
+    inputSchema: GenerateImageInputSchema,
     annotations: {
       readOnlyHint: false,
       destructiveHint: false,
@@ -129,7 +129,7 @@ Args:
 Returns: PredictionResult (see replicate_generate_image for shape). The local_paths will contain .mp4 files when downloaded.
 
 Tip: If timeout_ms is exceeded, the result will have pending=true and a prediction_id. Wait a minute, then call replicate_get_prediction.`,
-    inputSchema: GenerateVideoInputSchema.shape,
+    inputSchema: GenerateVideoInputSchema,
     annotations: {
       readOnlyHint: false,
       destructiveHint: false,
@@ -185,7 +185,7 @@ Examples:
   - prompt="upbeat synthwave with driving bassline", duration_seconds=15 → musicgen
   - prompt="indie folk, acoustic guitar, female vocals", model="ace-step", extra_input={lyrics: "Leaving home on a rainy day..."}
   - prompt="ambient lo-fi chill", model="riffusion"`,
-    inputSchema: GenerateAudioInputSchema.shape,
+    inputSchema: GenerateAudioInputSchema,
     annotations: {
       readOnlyHint: false,
       destructiveHint: false,
@@ -229,7 +229,7 @@ Args:
   - timeout_ms: Default 300000.
 
 Returns: PredictionResult. local_paths contain WAV/MP3 files.`,
-    inputSchema: GenerateSpeechInputSchema.shape,
+    inputSchema: GenerateSpeechInputSchema,
     annotations: {
       readOnlyHint: false,
       destructiveHint: false,
@@ -271,7 +271,7 @@ Returns: PredictionResult with text_output[0] containing the model's reply (late
 Examples:
   - prompt="Explain quantum entanglement in two sentences.", model="llama-3-70b"
   - prompt="Write a Python function to compute Levenshtein distance.", model="mistral-large", system_prompt="You are an expert software engineer."`,
-    inputSchema: ChatInputSchema.shape,
+    inputSchema: ChatInputSchema,
     annotations: {
       readOnlyHint: false,
       destructiveHint: false,
@@ -311,7 +311,7 @@ Returns: PredictionResult with text_output containing the model's textual answer
 Examples:
   - image="https://example.com/photo.jpg", prompt="What objects are visible?"
   - image="<chart-url>", prompt="Read the values off this chart and list them.", model="llava-v1.6-34b"`,
-    inputSchema: VisionInputSchema.shape,
+    inputSchema: VisionInputSchema,
     annotations: {
       readOnlyHint: false,
       destructiveHint: false,
@@ -353,7 +353,7 @@ Examples:
   - image="<low-res-photo>", scale=4 → real-esrgan
   - image="<face-photo>", model="gfpgan", scale=2 → restoration
   - image="<artwork>", model="clarity-upscaler", scale=2`,
-    inputSchema: UpscaleInputSchema.shape,
+    inputSchema: UpscaleInputSchema,
     annotations: {
       readOnlyHint: false,
       destructiveHint: false,
@@ -392,7 +392,7 @@ Returns: PredictionResult with urls + local_paths to a transparent PNG.
 Examples:
   - image="<product-photo>" → rembg quick cut
   - image="<portrait>", model="birefnet" → sharper edge for hair`,
-    inputSchema: RemoveBgInputSchema.shape,
+    inputSchema: RemoveBgInputSchema,
     annotations: {
       readOnlyHint: false,
       destructiveHint: false,
@@ -425,7 +425,7 @@ Args:
   - extra_input (object, optional): Model-specific extras (e.g. {batch_size: 24} for incredibly-fast-whisper).
 
 Returns: PredictionResult with text_output containing the transcript.`,
-    inputSchema: TranscribeAudioInputSchema.shape,
+    inputSchema: TranscribeAudioInputSchema,
     annotations: {
       readOnlyHint: false,
       destructiveHint: false,
@@ -460,7 +460,7 @@ Args:
   - prompt: Describes what should appear in the masked region.
   - model (default "flux-fill-pro"): Curated (flux-fill-pro, sd-inpaint, ideogram-v2-edit) or "owner/name".
   - extra_input (object, optional): Model-specific extras (e.g. {guidance: 30} for flux-fill-pro).`,
-    inputSchema: InpaintInputSchema.shape,
+    inputSchema: InpaintInputSchema,
     annotations: {
       readOnlyHint: false,
       destructiveHint: false,
@@ -493,7 +493,7 @@ Args:
   - prompt (string, optional): Text prompt for grounded segmentation. Required for grounded-sam.
   - model (default "sam-2"): Curated (sam-2, grounded-sam) or "owner/name".
   - extra_input (object, optional): SAM-specific tuning (e.g. {points_per_side: 32}).`,
-    inputSchema: SegmentInputSchema.shape,
+    inputSchema: SegmentInputSchema,
     annotations: {
       readOnlyHint: false,
       destructiveHint: false,
@@ -525,7 +525,7 @@ Args:
   - extra_input (object, optional): Model-specific extras (e.g. {task: "retrieval.query"} for jina v3).
 
 Returns: PredictionResult — the embedding vectors are in structuredContent.output (model-specific shape).`,
-    inputSchema: EmbedTextInputSchema.shape,
+    inputSchema: EmbedTextInputSchema,
     annotations: {
       readOnlyHint: false,
       destructiveHint: false,

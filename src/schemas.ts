@@ -84,7 +84,7 @@ export const GenerateImageInputSchema = z
       .optional()
       .describe("Random seed for reproducible outputs."),
     extra_input: z
-      .record(z.unknown())
+      .record(z.string(), z.unknown())
       .optional()
       .describe(
         "Additional model-specific inputs merged into the request (e.g. {guidance: 3.5}). Use replicate_get_model_schema to see what a model accepts.",
@@ -127,7 +127,7 @@ export const GenerateVideoInputSchema = z
       .optional()
       .describe("Aspect ratio."),
     extra_input: z
-      .record(z.unknown())
+      .record(z.string(), z.unknown())
       .optional()
       .describe("Additional model-specific inputs."),
     download,
@@ -159,7 +159,7 @@ export const GenerateAudioInputSchema = z
       .optional()
       .describe("Duration in seconds. Model-dependent."),
     extra_input: z
-      .record(z.unknown())
+      .record(z.string(), z.unknown())
       .optional()
       .describe("Additional model-specific inputs."),
     download,
@@ -195,7 +195,7 @@ export const GenerateSpeechInputSchema = z
       .optional()
       .describe("Speech speed multiplier (0.5-2.0)."),
     extra_input: z
-      .record(z.unknown())
+      .record(z.string(), z.unknown())
       .optional()
       .describe("Additional model-specific inputs."),
     download,
@@ -237,7 +237,7 @@ export const ChatInputSchema = z
       .optional()
       .describe("Sampling temperature 0.0–2.0. Lower = more deterministic."),
     extra_input: z
-      .record(z.unknown())
+      .record(z.string(), z.unknown())
       .optional()
       .describe("Additional model-specific inputs."),
     download: z
@@ -271,7 +271,7 @@ export const VisionInputSchema = z
         `Vision model. Curated: ${visionKeys.join(", ")}. Or "owner/name".`,
       ),
     max_tokens: z.number().int().min(1).max(4096).optional(),
-    extra_input: z.record(z.unknown()).optional(),
+    extra_input: z.record(z.string(), z.unknown()).optional(),
     download: z.boolean().default(false),
     timeout_ms: timeoutMs,
   })
@@ -297,7 +297,7 @@ export const UpscaleInputSchema = z
       .max(10)
       .optional()
       .describe("Upscale factor (1–10). Model-dependent; default 4 for real-esrgan."),
-    extra_input: z.record(z.unknown()).optional(),
+    extra_input: z.record(z.string(), z.unknown()).optional(),
     download: z.boolean().default(true),
     timeout_ms: timeoutMs,
   })
@@ -317,7 +317,7 @@ export const RemoveBgInputSchema = z
       .describe(
         `Background remover. Curated: ${bgKeys.join(", ")}. Or "owner/name".`,
       ),
-    extra_input: z.record(z.unknown()).optional(),
+    extra_input: z.record(z.string(), z.unknown()).optional(),
     download: z.boolean().default(true),
     timeout_ms: timeoutMs,
   })
@@ -348,7 +348,7 @@ export const TranscribeAudioInputSchema = z
       .boolean()
       .optional()
       .describe("If true, translate the transcript to English."),
-    extra_input: z.record(z.unknown()).optional(),
+    extra_input: z.record(z.string(), z.unknown()).optional(),
     download: z
       .boolean()
       .default(false)
@@ -379,7 +379,7 @@ export const InpaintInputSchema = z
       .describe(
         `Inpaint model. Curated: ${inpaintKeys.join(", ")}. Or "owner/name".`,
       ),
-    extra_input: z.record(z.unknown()).optional(),
+    extra_input: z.record(z.string(), z.unknown()).optional(),
     download: z.boolean().default(true),
     timeout_ms: timeoutMs,
   })
@@ -404,7 +404,7 @@ export const SegmentInputSchema = z
         `Segmentation model. Curated: ${segmentKeys.join(", ")}. Or "owner/name".`,
       ),
     extra_input: z
-      .record(z.unknown())
+      .record(z.string(), z.unknown())
       .optional()
       .describe(
         "Model-specific extras (e.g. {points_per_side: 32} for SAM 2 auto-mask).",
@@ -427,7 +427,7 @@ export const EmbedTextInputSchema = z
       .describe(
         `Embedding model. Curated: ${embedKeys.join(", ")}. Or "owner/name".`,
       ),
-    extra_input: z.record(z.unknown()).optional(),
+    extra_input: z.record(z.string(), z.unknown()).optional(),
     download: z
       .boolean()
       .default(false)
@@ -463,7 +463,7 @@ export const CloneVoiceInputSchema = z
         `Voice cloning model. Curated: ${voicecloneKeys.join(", ")}. Or "owner/name".`,
       ),
     extra_input: z
-      .record(z.unknown())
+      .record(z.string(), z.unknown())
       .optional()
       .describe("Additional model-specific inputs."),
     download: z.boolean().default(true),
@@ -496,7 +496,7 @@ export const Generate3DInputSchema = z
         `3D generation model. Curated: ${threedKeys.join(", ")}. Or "owner/name".`,
       ),
     extra_input: z
-      .record(z.unknown())
+      .record(z.string(), z.unknown())
       .optional()
       .describe("Additional model-specific inputs (e.g. {num_inference_steps: 50})."),
     download: z.boolean().default(true),
@@ -535,7 +535,7 @@ export const LipsyncInputSchema = z
         `Lipsync model. Curated: ${lipsyncKeys.join(", ")}. Or "owner/name".`,
       ),
     extra_input: z
-      .record(z.unknown())
+      .record(z.string(), z.unknown())
       .optional()
       .describe("Additional model-specific inputs."),
     download: z.boolean().default(true),
@@ -605,7 +605,7 @@ export const RunModelInputSchema = z
         'Replicate model identifier. Either "owner/name" (uses latest official version) or "owner/name:version_hash" (pins a specific version). Examples: "black-forest-labs/flux-schnell", "meta/meta-llama-3-70b-instruct".',
       ),
     input: z
-      .record(z.unknown())
+      .record(z.string(), z.unknown())
       .describe(
         "Model input parameters as a JSON object. Use replicate_get_model_schema first if unsure what a model accepts.",
       ),
@@ -733,7 +733,7 @@ export const BatchStartInputSchema = z
                 'Replicate model identifier: "owner/name" or "owner/name:version". Full ID required — curated shortcuts not supported here.',
               ),
             input: z
-              .record(z.unknown())
+              .record(z.string(), z.unknown())
               .describe("Model input parameters as a JSON object."),
           })
           .strict(),
@@ -803,7 +803,7 @@ export const PipelineStartInputSchema = z
                 'Full Replicate model id: "owner/name" or "owner/name:version". Full id required — curated shortcuts not supported.',
               ),
             input: z
-              .record(z.unknown())
+              .record(z.string(), z.unknown())
               .describe(
                 'Model inputs. Use "$stepId.field[n]" to reference prior step outputs. E.g. "$gen.urls[0]", "$llm.text_output[0]".',
               ),
@@ -942,7 +942,7 @@ export const CreateTrainingInputSchema = z
         'Where the trained weights are pushed, as "owner/name". The destination model must already exist on your account.',
       ),
     input: z
-      .record(z.unknown())
+      .record(z.string(), z.unknown())
       .default({})
       .describe(
         "Training inputs as a JSON object (dataset URL + hyperparameters). The exact keys depend on the trainer — call replicate_get_model_schema on the trainer model to see them.",
@@ -1010,7 +1010,7 @@ export const RunDeploymentInputSchema = z
       .min(1)
       .describe('Deployment to run, as "owner/name". Inspect it first with replicate_get_deployment.'),
     input: z
-      .record(z.unknown())
+      .record(z.string(), z.unknown())
       .default({})
       .describe("Model input parameters as a JSON object — same shape the deployment's underlying model expects."),
     download,

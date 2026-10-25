@@ -98,7 +98,7 @@ Examples:
   - Run an LLM (output is text, not a file, so local_paths will be empty):
       model="meta/meta-llama-3-70b-instruct",
       input={"prompt": "Explain quantum entanglement in two sentences."}`,
-    inputSchema: RunModelInputSchema.shape,
+    inputSchema: RunModelInputSchema,
     annotations: {
       readOnlyHint: false,
       destructiveHint: false,
@@ -153,7 +153,7 @@ Returns structuredContent:
   }
 
 Tip: Once you find a promising model, call replicate_get_model_schema with "owner/name" to see its inputs before calling replicate_run_model.`,
-    inputSchema: SearchModelsInputSchema.shape,
+    inputSchema: SearchModelsInputSchema,
     annotations: {
       readOnlyHint: true,
       destructiveHint: false,
@@ -205,7 +205,7 @@ Returns structuredContent:
     "output_schema": object | undefined,  // OpenAPI schema for outputs
     "example_url": string | undefined     // Replicate page with examples
   }`,
-    inputSchema: GetModelSchemaInputSchema.shape,
+    inputSchema: GetModelSchemaInputSchema,
     annotations: {
       readOnlyHint: true,
       destructiveHint: false,
@@ -253,7 +253,7 @@ Typical flow:
   1. Call replicate_generate_video → returns pending=true with prediction_id=abc123.
   2. Wait ~1 minute.
   3. Call replicate_get_prediction with prediction_id=abc123 → returns succeeded + URLs + local_paths.`,
-    inputSchema: GetPredictionInputSchema.shape,
+    inputSchema: GetPredictionInputSchema,
     annotations: {
       readOnlyHint: true,
       destructiveHint: false,
@@ -298,7 +298,7 @@ Returns structuredContent: { url, file_id, name }
 Examples:
   - file_path="C:/Users/me/photo.png"
   - base64_data="data:image/png;base64,iVBORw0KG...", → uploads, returns URL`,
-    inputSchema: UploadFileInputSchema.shape,
+    inputSchema: UploadFileInputSchema,
     annotations: {
       readOnlyHint: false,
       destructiveHint: false,
@@ -368,7 +368,7 @@ Examples:
   - category="image", priority="speed" → flux-schnell first
   - category="image", priority="quality" → highest-fidelity model first
   - category="video", priority="cost", duration_seconds=5 → cheapest per-5s clip`,
-    inputSchema: RecommendModelInputSchema.shape,
+    inputSchema: RecommendModelInputSchema,
     annotations: {
       readOnlyHint: true,
       destructiveHint: false,

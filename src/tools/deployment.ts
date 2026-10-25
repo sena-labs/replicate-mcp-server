@@ -64,7 +64,7 @@ Args:
 
 Returns structuredContent: { count: number, deployments: DeploymentSummary[] }.
 Each DeploymentSummary has owner, name, and current_release { model, version, hardware, min_instances, max_instances }.`,
-      inputSchema: ListDeploymentsInputSchema.shape,
+      inputSchema: ListDeploymentsInputSchema,
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
@@ -108,7 +108,7 @@ Args:
   - deployment: "owner/name" of the deployment.
 
 Returns structuredContent: DeploymentSummary.`,
-      inputSchema: GetDeploymentInputSchema.shape,
+      inputSchema: GetDeploymentInputSchema,
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
@@ -145,7 +145,7 @@ Args:
   - timeout_ms (optional): max ms to wait before returning a pending result you can poll with replicate_get_prediction.
 
 Returns the standard prediction result (inline image preview / text output, URLs, local_paths, prediction_id).`,
-      inputSchema: RunDeploymentInputSchema.shape,
+      inputSchema: RunDeploymentInputSchema,
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,

@@ -58,7 +58,7 @@ Returns: PredictionResult. local_paths contain WAV/MP3 files.
 Examples:
   - text="Hello world, this is my cloned voice.", reference_audio_url="<url-to-your-voice-sample.wav>"
   - text="Buongiorno a tutti!", reference_audio_url="<url>", language="it"`,
-    inputSchema: CloneVoiceInputSchema.shape,
+    inputSchema: CloneVoiceInputSchema,
     annotations: {
       readOnlyHint: false,
       destructiveHint: false,
@@ -107,7 +107,7 @@ Examples:
   - prompt="A red ceramic teapot" → hunyuan-3d
   - image_url="<product-photo>", model="triposr" → fast single-image 3D
   - image_url="<photo>", model="rodin" → high-quality 3D`,
-    inputSchema: Generate3DInputSchema.shape,
+    inputSchema: Generate3DInputSchema,
     annotations: {
       readOnlyHint: false,
       destructiveHint: false,
@@ -156,7 +156,7 @@ Returns: PredictionResult. local_paths contain .mp4 files.
 Examples:
   - image_url="<portrait.jpg>", text="Hello! Welcome to our product demo." → video-avatar (TTS + lipsync)
   - image_url="<face.jpg>", audio_url="<speech.wav>", model="sadtalker" → audio-driven lipsync`,
-    inputSchema: LipsyncInputSchema.shape,
+    inputSchema: LipsyncInputSchema,
     annotations: {
       readOnlyHint: false,
       destructiveHint: false,

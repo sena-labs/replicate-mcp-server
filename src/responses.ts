@@ -219,7 +219,7 @@ export function formatError(err: unknown, hint?: string): ToolResponse {
   if (err instanceof z.ZodError) {
     message =
       "Invalid input:\n" +
-      err.errors.map((e) => `  - ${e.path.join(".")}: ${e.message}`).join("\n");
+      err.issues.map((e) => `  - ${e.path.join(".")}: ${e.message}`).join("\n");
   } else if (err instanceof Error) {
     message = err.message;
   } else {
