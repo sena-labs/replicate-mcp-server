@@ -3,7 +3,7 @@
 All notable changes to `replicate-mcp-server`. Format roughly follows
 [Keep a Changelog](https://keepachangelog.com/) with [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [3.3.1] — 2026-10-25
 
 ### Security
 
@@ -20,6 +20,10 @@ All notable changes to `replicate-mcp-server`. Format roughly follows
   schema differences: `extra_input`/`input` records declare
   `propertyNames: {type: string}` and integer `seed` fields carry safe-integer
   bounds. Validation error text now uses zod 4 wording.
+
+### Fixed
+
+- README: replace the broken Smithery badge image (the badge endpoint returns HTTP 500).
 
 ## [3.3.0] — 2026-10-17
 
