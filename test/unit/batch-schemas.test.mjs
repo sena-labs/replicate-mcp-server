@@ -33,7 +33,7 @@ test("BatchStartInputSchema — accepts full valid input", () => {
 });
 
 test("BatchStartInputSchema — rejects empty items array", () => {
-  assert.throws(() => BatchStartInputSchema.parse({ items: [] }), /at least 1/);
+  assert.throws(() => BatchStartInputSchema.parse({ items: [] }), />=1/);
 });
 
 test("BatchStartInputSchema — rejects items array > 50", () => {
@@ -41,7 +41,7 @@ test("BatchStartInputSchema — rejects items array > 50", () => {
     model: "owner/model",
     input: { i },
   }));
-  assert.throws(() => BatchStartInputSchema.parse({ items }), /at most 50/);
+  assert.throws(() => BatchStartInputSchema.parse({ items }), /<=50/);
 });
 
 test("BatchStartInputSchema — rejects concurrency = 0", () => {
@@ -51,7 +51,7 @@ test("BatchStartInputSchema — rejects concurrency = 0", () => {
         items: [{ model: "owner/model", input: {} }],
         concurrency: 0,
       }),
-    /greater than or equal to 1/,
+    />=1/,
   );
 });
 
@@ -62,7 +62,7 @@ test("BatchStartInputSchema — rejects concurrency > 10", () => {
         items: [{ model: "owner/model", input: {} }],
         concurrency: 11,
       }),
-    /less than or equal to 10/,
+    /<=10/,
   );
 });
 
@@ -73,7 +73,7 @@ test("BatchStartInputSchema — rejects ttl_hours > 72", () => {
         items: [{ model: "owner/model", input: {} }],
         ttl_hours: 73,
       }),
-    /less than or equal to 72/,
+    /<=72/,
   );
 });
 
@@ -84,5 +84,5 @@ test("BatchStatusInputSchema — defaults applied", () => {
 });
 
 test("BatchStatusInputSchema — rejects empty job_id", () => {
-  assert.throws(() => BatchStatusInputSchema.parse({ job_id: "" }), /at least 1/);
+  assert.throws(() => BatchStatusInputSchema.parse({ job_id: "" }), />=1/);
 });

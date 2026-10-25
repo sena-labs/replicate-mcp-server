@@ -34,7 +34,7 @@ test("PipelineStartInputSchema — accepts full valid input", () => {
 test("PipelineStartInputSchema — rejects empty steps array", () => {
   assert.throws(
     () => PipelineStartInputSchema.parse({ steps: [] }),
-    /at least 1/,
+    />=1/,
   );
 });
 
@@ -46,7 +46,7 @@ test("PipelineStartInputSchema — rejects steps array > 20", () => {
   }));
   assert.throws(
     () => PipelineStartInputSchema.parse({ steps }),
-    /at most 20/,
+    /<=20/,
   );
 });
 
@@ -57,7 +57,7 @@ test("PipelineStartInputSchema — rejects concurrency = 0", () => {
         steps: [{ id: "s", model: "o/m", input: {} }],
         concurrency: 0,
       }),
-    /greater than or equal to 1/,
+    />=1/,
   );
 });
 
@@ -68,7 +68,7 @@ test("PipelineStartInputSchema — rejects concurrency > 5", () => {
         steps: [{ id: "s", model: "o/m", input: {} }],
         concurrency: 6,
       }),
-    /less than or equal to 5/,
+    /<=5/,
   );
 });
 
@@ -79,7 +79,7 @@ test("PipelineStartInputSchema — rejects ttl_hours > 72", () => {
         steps: [{ id: "s", model: "o/m", input: {} }],
         ttl_hours: 73,
       }),
-    /less than or equal to 72/,
+    /<=72/,
   );
 });
 
@@ -92,6 +92,6 @@ test("PipelineStatusInputSchema — defaults applied", () => {
 test("PipelineStatusInputSchema — rejects empty pipeline_id", () => {
   assert.throws(
     () => PipelineStatusInputSchema.parse({ pipeline_id: "" }),
-    /at least 1/,
+    />=1/,
   );
 });

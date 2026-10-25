@@ -54,7 +54,7 @@ Args:
   - input: training inputs as a JSON object (dataset URL + hyperparameters). Call replicate_get_model_schema on the trainer to see its exact inputs.
 
 Returns structuredContent: TrainingSummary { id, status, model, version, destination, created_at, completed_at, output_version, error }.`,
-      inputSchema: CreateTrainingInputSchema.shape,
+      inputSchema: CreateTrainingInputSchema,
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
@@ -92,7 +92,7 @@ Args:
   - training_id: ID returned by replicate_create_training.
 
 Returns structuredContent: TrainingSummary.`,
-      inputSchema: GetTrainingInputSchema.shape,
+      inputSchema: GetTrainingInputSchema,
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
@@ -125,7 +125,7 @@ Args:
   - limit (1-100, default 10): How many trainings to return.
 
 Returns structuredContent: { count: number, trainings: TrainingSummary[] }.`,
-      inputSchema: ListTrainingsInputSchema.shape,
+      inputSchema: ListTrainingsInputSchema,
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
@@ -169,7 +169,7 @@ Args:
   - training_id: ID of the training to cancel.
 
 Returns structuredContent: TrainingSummary with the updated status (typically "canceled").`,
-      inputSchema: CancelTrainingInputSchema.shape,
+      inputSchema: CancelTrainingInputSchema,
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,

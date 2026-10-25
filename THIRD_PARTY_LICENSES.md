@@ -248,7 +248,7 @@ limitations under the License.
 
 ---
 
-## zod `3.25.76` — MIT
+## zod `4.6.7` — MIT
 
 Homepage: https://zod.dev
 

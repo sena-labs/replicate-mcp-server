@@ -76,7 +76,7 @@ Args:
 
 Returns structuredContent: { count: number, predictions: PredictionSummary[] }
 Each PredictionSummary has id, model, status, created_at, completed_at, url.`,
-    inputSchema: ListPredictionsInputSchema.shape,
+    inputSchema: ListPredictionsInputSchema,
     annotations: {
       readOnlyHint: true,
       destructiveHint: false,
@@ -118,7 +118,7 @@ Args:
   - prediction_id (string): ID of the prediction to cancel (returned by an earlier generate_* call).
 
 Returns: PredictionSummary with updated status (typically "canceled").`,
-    inputSchema: CancelPredictionInputSchema.shape,
+    inputSchema: CancelPredictionInputSchema,
     annotations: {
       readOnlyHint: false,
       destructiveHint: true,
@@ -163,7 +163,7 @@ Examples:
   - model="flux-schnell", num_outputs=4  → ~$0.012 (4 × $0.003 per_run)
   - model="kling-pro", duration_seconds=5 → ~$0.45 (5 × $0.09 per_second)
   - model="meta/meta-llama-3-70b-instruct", duration_seconds=10 → ~$0.024 (10 × $0.0024 per_second)`,
-    inputSchema: EstimateCostInputSchema.shape,
+    inputSchema: EstimateCostInputSchema,
     annotations: {
       readOnlyHint: true,
       destructiveHint: false,
@@ -228,7 +228,7 @@ Returns structuredContent:
 Examples:
   - "Check for new popular models" → all categories, min 1000 runs
   - categories=["image","video"], min_run_count=10000 → only top-tier image/video models`,
-    inputSchema: RefreshModelsInputSchema.shape,
+    inputSchema: RefreshModelsInputSchema,
     annotations: {
       readOnlyHint: true,
       destructiveHint: false,
