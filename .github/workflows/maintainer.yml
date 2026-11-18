@@ -1,0 +1,29 @@
+name: Repository maintainer
+on:
+  issues:
+    types: [opened]
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+  push:
+    branches: [main]
+    paths: ['.github/workflows/maintainer.yml']
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  maintain:
+    if: >-
+      github.repository == 'sena-labs/replicate-mcp-server' &&
+      (github.event_name != 'workflow_run' ||
+       (github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'failure' &&
+        github.event.workflow_run.head_repository.full_name == github.repository &&
+        startsWith(github.event.workflow_run.head_branch, 'maintainer/issue-')))
+    permissions:
+      actions: read
+      contents: write
+      id-token: write
+      issues: read
+      pull-requests: write
+    uses: sena-labs/Open-WebUI-Pipe-OpenRouter/.github/workflows/public-maintainer.yml@main
