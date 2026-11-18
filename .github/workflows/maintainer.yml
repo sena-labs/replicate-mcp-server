@@ -26,4 +26,4 @@ jobs:
       id-token: write
       issues: read
       pull-requests: write
-    uses: sena-labs/Open-WebUI-Pipe-OpenRouter/.github/workflows/public-maintainer.yml@main
+    uses: sena-labs/Open-WebUI-Pipe-OpenRouter/.github/workflows/public-maintainer.yml@c073029994816ce7d147d11c91f0c7c144abbe79
